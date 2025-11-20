@@ -1,0 +1,28 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Databases and local state
+*.db
+*.sqlite3
+.env
+.env.*
+!.env.example
+
+# Frontend builds
+node_modules/
+dist/
+build/
+
+# Editor files
+.DS_Store
+*.swp
+.idea/
+.vscode/
