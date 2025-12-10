@@ -256,6 +256,18 @@
         flex: 1;
         min-height: 60px;
       }
+      .recap-card {
+        border: 1px solid #1f2c44;
+        border-radius: 10px;
+        padding: 12px;
+        background: #0f1218;
+        margin-top: 10px;
+      }
+      .recap-meta {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
     </style>
   </head>
 
@@ -332,6 +344,15 @@
         </div>
         <div class="muted" id="chatStatus"></div>
       </div>
+
+      <div class="panel">
+        <h2>Recaps</h2>
+        <p class="muted">Generate weekly or monthly snapshots of themes, mood, and highlights.</p>
+        <button id="weeklyBtn" class="primary">Generate weekly recap</button>
+        <button id="monthlyBtn">Generate monthly recap</button>
+        <div class="muted" id="recapStatus"></div>
+        <div id="recapResult" class="recap-card hidden"></div>
+      </div>
     </section>
 
     <script>
@@ -354,11 +375,16 @@
       const chatInput = document.getElementById("chatInput");
       const chatSendBtn = document.getElementById("chatSendBtn");
       const chatStatus = document.getElementById("chatStatus");
+      const weeklyBtn = document.getElementById("weeklyBtn");
+      const monthlyBtn = document.getElementById("monthlyBtn");
+      const recapStatus = document.getElementById("recapStatus");
+      const recapResult = document.getElementById("recapResult");
 
       let mediaRecorder = null;
       let chunks = [];
       let insightsLoadedOnce = false;
       let conversationHistory = [];
+      let lastRecapType = null;
 
       // --- Capture tab logic (existing flow) ---
       function log(msg) {
@@ -754,6 +780,47 @@
         chatPane.scrollTop = chatPane.scrollHeight;
       }
 
+      async function generateRecap(type) {
+        recapStatus.textContent = "Generating...";
+        recapResult.classList.add("hidden");
+        recapResult.innerHTML = "";
+        weeklyBtn.disabled = true;
+        monthlyBtn.disabled = true;
+        lastRecapType = type;
+        try {
+          const resp = await fetch(`http://localhost:8000/insights/${type}`);
+          if (!resp.ok) {
+            const text = await resp.text();
+            throw new Error(text || `Server responded with ${resp.status}`);
+          }
+          const data = await resp.json();
+          renderRecap(data);
+          recapStatus.textContent = "";
+        } catch (err) {
+          recapStatus.textContent = `Error: ${err.message}`;
+        } finally {
+          weeklyBtn.disabled = false;
+          monthlyBtn.disabled = false;
+        }
+      }
+
+      function renderRecap(data) {
+        recapResult.classList.remove("hidden");
+        const moodList = (data.mood_trajectory || [])
+          .map((m) => `${m.date}: ${m.top_emotion || "—"} (${m.score ?? "-"})`)
+          .join("<br>");
+
+        recapResult.innerHTML = `
+          <div class="recap-meta">Entries: ${data.total_entries} • Words: ${data.total_words}</div>
+          <div><strong>Summary:</strong> ${data.summary || "—"}</div>
+          <div style="margin-top:8px;"><strong>Themes:</strong> ${(data.themes || []).join(", ") || "—"}</div>
+          <div style="margin-top:8px;"><strong>Highlights:</strong><br>${(data.highlights || []).map(h => `• ${h}`).join("<br>") || "—"}</div>
+          <div style="margin-top:8px;"><strong>Top emotions:</strong> ${(data.top_emotions || []).join(", ") || "—"}</div>
+          <div style="margin-top:8px;"><strong>Top topics:</strong> ${(data.top_topics || []).join(", ") || "—"}</div>
+          <div style="margin-top:8px;"><strong>Mood trajectory:</strong><br>${moodList || "—"}</div>
+        `;
+      }
+
       async function askQuestion() {
         const question = questionInput.value.trim();
         if (!question) {
@@ -805,6 +872,8 @@
 
       askBtn.addEventListener("click", askQuestion);
       chatSendBtn.addEventListener("click", sendConversationMessage);
+      weeklyBtn.addEventListener("click", () => generateRecap("weekly"));
+      monthlyBtn.addEventListener("click", () => generateRecap("monthly"));
 
       // Initial state
       setActiveTab("capture");

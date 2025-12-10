@@ -67,6 +67,8 @@ API base: `http://127.0.0.1:8000`
 - `GET /insights/summary` – Aggregate stats.
 - `POST /insights/query` – Ask a question grounded in stored entries.
 - `POST /conversation/respond` – Send a conversational message with history; returns a grounded reply and referenced entry ids.
+- `GET /insights/weekly` – Weekly recap (summary, themes, highlights, mood trajectory).
+- `GET /insights/monthly` – Monthly recap (summary, themes, highlights, mood trajectory).
 - `GET /health` – Basic health check.
 
 ## Notes

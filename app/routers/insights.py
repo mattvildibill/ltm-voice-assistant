@@ -1,6 +1,6 @@
 import json
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -51,6 +51,30 @@ class InsightsSummary(BaseModel):
     top_topics: List[str] = Field(default_factory=list)
     top_people: List[str] = Field(default_factory=list)
     top_places: List[str] = Field(default_factory=list)
+
+
+class RecapRequest(BaseModel):
+    period: str  # "weekly" or "monthly"
+
+
+class MoodPoint(BaseModel):
+    date: str
+    top_emotion: Optional[str] = None
+    score: Optional[float] = None
+
+
+class RecapResponse(BaseModel):
+    period: str
+    total_entries: int
+    total_words: int
+    top_emotions: List[str] = Field(default_factory=list)
+    top_topics: List[str] = Field(default_factory=list)
+    top_people: List[str] = Field(default_factory=list)
+    top_places: List[str] = Field(default_factory=list)
+    mood_trajectory: List[MoodPoint] = Field(default_factory=list)
+    summary: str
+    themes: List[str] = Field(default_factory=list)
+    highlights: List[str] = Field(default_factory=list)
 
 
 class InsightsQueryRequest(BaseModel):
@@ -215,6 +239,16 @@ async def query_insights(
     )
 
 
+@router.get("/weekly", response_model=RecapResponse)
+def weekly_recap(session: Session = Depends(get_db_session)):
+    return _build_recap(period="weekly", days=7, session=session)
+
+
+@router.get("/monthly", response_model=RecapResponse)
+def monthly_recap(session: Session = Depends(get_db_session)):
+    return _build_recap(period="monthly", days=30, session=session)
+
+
 def _split(value: Optional[str]) -> List[str]:
     if not value:
         return []
@@ -285,3 +319,127 @@ def _cosine_similarity(a: List[float], b: List[float]) -> Optional[float]:
     if norm_a == 0 or norm_b == 0:
         return None
     return dot / (norm_a * norm_b)
+
+
+def _build_recap(period: str, days: int, session: Session) -> RecapResponse:
+    """
+    Build weekly/monthly recaps: gather stats locally, then synthesize summary via OpenAI.
+    """
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    entries = session.exec(
+        select(Entry).where(Entry.created_at >= cutoff).order_by(Entry.created_at)
+    ).all()
+
+    if not entries:
+        raise HTTPException(status_code=404, detail=f"No entries found for {period} recap.")
+
+    total_entries = len(entries)
+    total_words = sum(entry.word_count or len((entry.original_text or "").split()) for entry in entries)
+
+    emotion_counts = Counter()
+    topic_counts = Counter()
+    people_counts = Counter()
+    places_counts = Counter()
+
+    mood_points: List[MoodPoint] = []
+    for entry in entries:
+        emotion_counts.update(_split(entry.emotions))
+        topic_counts.update(_split(entry.topics))
+        people_counts.update(_split(entry.people))
+        places_counts.update(_split(entry.places))
+
+        scores = _json_to_dict(entry.emotion_scores)
+        if scores:
+            top_name, top_score = max(scores.items(), key=lambda kv: kv[1])
+            mood_points.append(
+                MoodPoint(
+                    date=entry.created_at.date().isoformat(),
+                    top_emotion=top_name,
+                    score=round(float(top_score), 3),
+                )
+            )
+
+    stats_context = {
+        "period": period,
+        "total_entries": total_entries,
+        "total_words": total_words,
+        "top_emotions": _top_keys(emotion_counts),
+        "top_topics": _top_keys(topic_counts),
+        "top_people": _top_keys(people_counts),
+        "top_places": _top_keys(places_counts),
+        "mood_points": [mp.model_dump() for mp in mood_points],
+    }
+
+    summary, themes, highlights = _synthesize_recap(entries, stats_context)
+
+    return RecapResponse(
+        period=period,
+        total_entries=total_entries,
+        total_words=total_words,
+        top_emotions=stats_context["top_emotions"],
+        top_topics=stats_context["top_topics"],
+        top_people=stats_context["top_people"],
+        top_places=stats_context["top_places"],
+        mood_trajectory=mood_points,
+        summary=summary,
+        themes=themes,
+        highlights=highlights,
+    )
+
+
+def _synthesize_recap(entries: List[Entry], stats: Dict) -> Tuple[str, List[str], List[str]]:
+    """
+    Use OpenAI to synthesize a recap from locally computed stats + entry snippets.
+    """
+    snippets = []
+    for entry in entries:
+        text = (entry.summary or entry.original_text or "").strip()
+        if len(text) > 240:
+            text = text[:240] + "..."
+        snippets.append(f"[{entry.created_at.date()}] {text}")
+
+    system_msg = (
+        "You are a personal memory analyst. Given journal entry snippets and local stats, "
+        "write a concise recap that feels personal and grounded in the user's entries. "
+        "Keep it brief and do not invent facts beyond the provided snippets."
+    )
+    user_content = (
+        f"Period: {stats['period']}\n"
+        f"Total entries: {stats['total_entries']}\n"
+        f"Total words: {stats['total_words']}\n"
+        f"Top emotions: {stats['top_emotions']}\n"
+        f"Top topics: {stats['top_topics']}\n"
+        f"Top people: {stats['top_people']}\n"
+        f"Top places: {stats['top_places']}\n"
+        f"Mood points: {stats['mood_points']}\n\n"
+        "Entry snippets:\n" + "\n".join(snippets)
+    )
+
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": user_content},
+            ],
+            temperature=0.5,
+        )
+    except Exception:
+        return (
+            "Unable to generate a recap right now.",
+            [],
+            [],
+        )
+
+    content = resp.choices[0].message.content if resp.choices else ""
+    summary = content or "No recap generated."
+
+    themes: List[str] = []
+    highlights: List[str] = []
+    if summary:
+        parts = [p.strip("-• ").strip() for p in summary.split("\n") if p.strip()]
+        if len(parts) > 1:
+            themes = parts[: min(3, len(parts))]
+            highlights = parts[min(3, len(parts)) :]
+
+    return summary, themes, highlights
