@@ -11,6 +11,8 @@ Run from project root with venv + .env configured:
 
 import asyncio
 import json
+import random
+from datetime import datetime, timedelta
 from typing import Optional
 
 from sqlmodel import delete, select
@@ -21,6 +23,8 @@ from app.services.entry_service import process_entry
 from app.services.openai_service import client
 
 TARGET_COUNT = 1000
+# Spread generated entries across this many days in the past (approx. one year).
+DAYS_RANGE = 365
 
 
 def wipe_entries() -> int:
@@ -64,12 +68,26 @@ def generate_bf_qa_text() -> Optional[str]:
 async def seed_entries(count: int) -> int:
     """Generate and store count entries via process_entry. Returns successful count."""
     success = 0
+    start_date = datetime.utcnow() - timedelta(days=DAYS_RANGE)
     for i in range(count):
         qa_text = generate_bf_qa_text()
         if not qa_text:
             continue
         try:
-            await process_entry(text=qa_text, file=None)
+            result = await process_entry(text=qa_text, file=None)
+            entry_id = result.get("entry_id")
+            if entry_id:
+                random_date = start_date + timedelta(
+                    days=random.randint(0, DAYS_RANGE),
+                    hours=random.randint(0, 23),
+                    minutes=random.randint(0, 59),
+                )
+                with get_session() as session:
+                    entry = session.get(Entry, entry_id)
+                    if entry:
+                        entry.created_at = random_date
+                        session.add(entry)
+                        session.commit()
             success += 1
         except Exception:
             # Skip failures and continue
