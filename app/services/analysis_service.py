@@ -6,7 +6,7 @@ from app.services.openai_service import client
 def analyze_text(text: str):
     """
     Generates summary, themes, emotions + scores, topics, people/places,
-    and memory chunks. Returns a Python dict.
+    sentiment label/score, and memory chunks. Returns a Python dict.
     """
 
     system_prompt = """
@@ -20,12 +20,14 @@ def analyze_text(text: str):
       "emotions": [{"name": "joy", "score": 0.72}, {"name": "calm", "score": 0.44}],
       "people": ["Alice", "Grandma"],
       "places": ["Paris", "home"],
+      "sentiment": {"label": "positive|neutral|negative", "score": 0.0-1.0},
       "memory_chunks": ["...", "..."]
     }
 
     Rules:
     - Scores are between 0 and 1.
     - If a field is not applicable, return an empty list for it.
+    - Sentiment label must be one of: positive, neutral, negative.
     - Do not include ANY commentary outside the JSON.
     """
 

@@ -35,6 +35,8 @@ class EntryPreview(BaseModel):
     people: List[str] = Field(default_factory=list)
     places: List[str] = Field(default_factory=list)
     word_count: Optional[int] = None
+    sentiment_label: Optional[str] = None
+    sentiment_score: Optional[float] = None
 
 
 class EntriesPerDay(BaseModel):
@@ -51,6 +53,7 @@ class InsightsSummary(BaseModel):
     top_topics: List[str] = Field(default_factory=list)
     top_people: List[str] = Field(default_factory=list)
     top_places: List[str] = Field(default_factory=list)
+    average_sentiment_score: Optional[float] = None
 
 
 class RecapRequest(BaseModel):
@@ -119,6 +122,8 @@ def list_entries(session: Session = Depends(get_db_session)):
                 people=_split(entry.people),
                 places=_split(entry.places),
                 word_count=entry.word_count,
+                sentiment_label=entry.sentiment_label,
+                sentiment_score=entry.sentiment_score,
             )
         )
 
@@ -141,6 +146,7 @@ def get_summary(session: Session = Depends(get_db_session)):
     emotion_counts = Counter()
     people_counts = Counter()
     places_counts = Counter()
+    sentiment_scores: List[float] = []
 
     for entry in entries:
         date_str = entry.created_at.date().isoformat()
@@ -149,6 +155,8 @@ def get_summary(session: Session = Depends(get_db_session)):
         emotion_counts.update(_split(entry.emotions))
         people_counts.update(_split(entry.people))
         places_counts.update(_split(entry.places))
+        if entry.sentiment_score is not None:
+            sentiment_scores.append(entry.sentiment_score)
 
     entries_per_day = [
         EntriesPerDay(date=date, count=count) for date, count in sorted(counts.items())
@@ -163,6 +171,7 @@ def get_summary(session: Session = Depends(get_db_session)):
         top_topics=_top_keys(topic_counts),
         top_people=_top_keys(people_counts),
         top_places=_top_keys(places_counts),
+        average_sentiment_score=(sum(sentiment_scores) / len(sentiment_scores)) if sentiment_scores else None,
     )
 
 

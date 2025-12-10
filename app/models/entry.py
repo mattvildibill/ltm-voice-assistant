@@ -23,5 +23,7 @@ class Entry(SQLModel, table=True):
     places: Optional[str] = None  # comma-delimited places
     word_count: Optional[int] = None
     embedding: Optional[str] = None  # JSON array of floats
+    sentiment_label: Optional[str] = None
+    sentiment_score: Optional[float] = None
 
     created_at: datetime = Field(default_factory=datetime.utcnow)

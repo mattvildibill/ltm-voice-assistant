@@ -45,6 +45,15 @@ async def process_entry(text: Optional[str], file: Optional[UploadFile]):
     people = analysis.get("people")
     places = analysis.get("places")
     memory_chunks = analysis.get("memory_chunks")
+    sentiment = analysis.get("sentiment") or {}
+    sentiment_label = None
+    sentiment_score = None
+    if isinstance(sentiment, dict):
+        sentiment_label = sentiment.get("label")
+        try:
+            sentiment_score = float(sentiment.get("score")) if sentiment.get("score") is not None else None
+        except (TypeError, ValueError):
+            sentiment_score = None
 
     themes_str = ", ".join(themes) if isinstance(themes, list) else None
     topics_str = ", ".join(topics) if isinstance(topics, list) else None
@@ -87,6 +96,8 @@ async def process_entry(text: Optional[str], file: Optional[UploadFile]):
             memory_chunks=memory_chunks_str,
             word_count=word_count,
             embedding=embedding_str,
+            sentiment_label=sentiment_label,
+            sentiment_score=sentiment_score,
         )
         session.add(entry)
         session.commit()

@@ -50,6 +50,7 @@ def client(monkeypatch, tmp_path):
             "emotions": [{"name": "joy", "score": 0.9}],
             "people": ["Alex"],
             "places": ["Home"],
+            "sentiment": {"label": "positive", "score": 0.9},
             "memory_chunks": ["chunk"],
         }
 

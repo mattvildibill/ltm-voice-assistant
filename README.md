@@ -49,9 +49,9 @@ OPENAI_API_KEY=your_key_here
 # Optional: DATABASE_URL=sqlite:///./ltm.db
 ```
 
-Initialize the database (once):
+# Initialize the database (once) or run migrations:
 ```bash
-python -c "from app.db.database import init_db; init_db()"
+alembic upgrade head
 ```
 
 ## Run the backend

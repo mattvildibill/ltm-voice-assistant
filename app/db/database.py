@@ -43,6 +43,8 @@ def migrate_db() -> None:
             ("places", "TEXT"),
             ("word_count", "INTEGER"),
             ("embedding", "TEXT"),
+            ("sentiment_label", "TEXT"),
+            ("sentiment_score", "FLOAT"),
         ],
     )
 
