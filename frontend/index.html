@@ -24,7 +24,7 @@
     .container { width: 100%; max-width: 1100px; }
     h1 { margin: 0 0 6px; letter-spacing: 0.6px; }
     p { color: var(--muted); }
-    .tabs { display: flex; gap: 10px; margin: 18px 0; }
+    .tabs { display: flex; gap: 10px; margin: 18px 0; flex-wrap: wrap; }
     .tab-btn {
       padding: 12px 18px;
       border-radius: 10px;
@@ -133,6 +133,9 @@
     .bar-track { flex: 1; height: 14px; background: #1b1b1b; border-radius: 6px; overflow: hidden; border: 1px solid #222; }
     .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
     .recap-card { border: 1px solid #1f2c44; border-radius: 10px; padding: 12px; background: #0f1218; margin-top: 10px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 10px; margin-top: 8px; }
+    .stat { background:#0f1218; border:1px solid #1f2437; border-radius:8px; padding:10px; }
+    .filter-btn.active { background: var(--accent); color: #0b1221; border-color: var(--accent); }
     textarea { width: 100%; }
     .hidden { display: none; }
   </style>
@@ -169,9 +172,9 @@
       <div class="card">
         <h2>Browse your timeline</h2>
         <div style="margin-bottom:10px;">
-          <button class="primary" data-range="7" id="filter7">Last 7 days</button>
-          <button data-range="30" id="filter30">Last 30 days</button>
-          <button data-range="all" id="filterAll">All time</button>
+          <button class="primary filter-btn" data-range="7" id="filter7">Last 7 days</button>
+          <button class="filter-btn" data-range="30" id="filter30">Last 30 days</button>
+          <button class="filter-btn" data-range="all" id="filterAll">All time</button>
         </div>
         <div id="timelineStatus" class="muted">Loading…</div>
         <div id="timelineList"></div>
@@ -183,6 +186,11 @@
       <div class="card">
         <h2>Insights</h2>
         <div id="summaryText" class="muted">Loading stats…</div>
+        <div class="stat-grid">
+          <div class="stat" id="statEntries"></div>
+          <div class="stat" id="statWords"></div>
+          <div class="stat" id="statAvg"></div>
+        </div>
         <div id="entriesChart" class="chart"></div>
         <button id="weeklyQuickBtn" class="primary" style="margin-top:8px;">Generate weekly recap</button>
         <div id="weeklyQuickStatus" class="muted"></div>
@@ -213,6 +221,9 @@
     const timelineList = document.getElementById("timelineList");
     const summaryText = document.getElementById("summaryText");
     const entriesChart = document.getElementById("entriesChart");
+    const statEntries = document.getElementById("statEntries");
+    const statWords = document.getElementById("statWords");
+    const statAvg = document.getElementById("statAvg");
     const weeklyQuickBtn = document.getElementById("weeklyQuickBtn");
     const weeklyQuickStatus = document.getElementById("weeklyQuickStatus");
     const weeklyQuickResult = document.getElementById("weeklyQuickResult");
@@ -314,15 +325,16 @@
     async function loadEntries() {
       if (entriesCache.length) {
         renderRecent(entriesCache);
-        renderTimeline(entriesCache);
+        renderTimeline(entriesCache, "all");
         return;
       }
+      timelineStatus.textContent = "Loading…";
       try {
         const resp = await fetch("http://localhost:8000/insights/entries");
         if (!resp.ok) throw new Error(`Server responded with ${resp.status}`);
         entriesCache = await resp.json();
         renderRecent(entriesCache);
-        renderTimeline(entriesCache);
+        renderTimeline(entriesCache, "all");
       } catch (err) {
         recentEntriesEl.textContent = `Failed to load entries: ${err.message}`;
         timelineStatus.textContent = `Failed to load entries: ${err.message}`;
@@ -424,7 +436,10 @@
         return;
       }
       const { total_entries, total_words, average_word_count, entries_per_day } = data;
-      summaryText.textContent = `You have ${total_entries} entries and ${total_words} words (avg ${average_word_count.toFixed(1)} words/entry).`;
+      summaryText.textContent = "Your entries at a glance:";
+      statEntries.textContent = `Entries: ${total_entries}`;
+      statWords.textContent = `Total words: ${total_words}`;
+      statAvg.textContent = `Avg words/entry: ${average_word_count.toFixed(1)}`;
 
       entriesChart.innerHTML = "";
       if (!entries_per_day || !entries_per_day.length) {
@@ -461,17 +476,18 @@
       weeklyQuickBtn.disabled = true;
       try {
         const resp = await fetch("http://localhost:8000/insights/weekly");
-        if (!resp.ok) throw new Error(await resp.text());
+        if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
         const data = await resp.json();
         weeklyQuickResult.classList.remove("hidden");
         weeklyQuickResult.innerHTML = `
-          <div class="muted">Entries: ${data.total_entries} • Avg sentiment: ${data.average_sentiment ?? "—"}</div>
+          <div class="muted">Entries: ${data.total_entries ?? "—"} • Avg sentiment: ${data.average_sentiment ?? "—"}</div>
           <div><strong>Summary:</strong> ${data.summary || "—"}</div>
           <div style="margin-top:6px;"><strong>Top topics:</strong> ${(data.top_topics || []).join(", ") || "—"}</div>
         `;
         weeklyQuickStatus.textContent = "";
       } catch (err) {
-        weeklyQuickStatus.textContent = `Error: ${err.message}`;
+        weeklyQuickStatus.textContent = `Error: ${err.message || "Weekly recap unavailable"}`;
+        // TODO: handle missing /insights/weekly endpoint or upstream failures more gracefully
       } finally {
         weeklyQuickBtn.disabled = false;
       }
