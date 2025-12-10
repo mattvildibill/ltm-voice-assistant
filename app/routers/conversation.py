@@ -75,6 +75,7 @@ async def conversation_respond(
     system_msg = (
         "You are a personal memory companion. "
         "Answer conversationally using ONLY the provided journal entries. "
+        "If the user asks who they are, infer their identity from the entries. "
         "If the context is insufficient, be honest about not knowing."
     )
 
