@@ -17,5 +17,10 @@ class Entry(SQLModel, table=True):
     themes: Optional[str] = None
     emotions: Optional[str] = None
     memory_chunks: Optional[str] = None  # JSON string or joined text
+    emotion_scores: Optional[str] = None  # JSON string of emotion->score
+    topics: Optional[str] = None  # comma-delimited topics
+    people: Optional[str] = None  # comma-delimited people
+    places: Optional[str] = None  # comma-delimited places
+    word_count: Optional[int] = None
 
     created_at: datetime = Field(default_factory=datetime.utcnow)

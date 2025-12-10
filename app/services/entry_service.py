@@ -30,17 +30,41 @@ async def process_entry(text: Optional[str], file: Optional[UploadFile]):
     if not text or text.strip() == "":
         return {"error": "No text or audio content provided."}
 
-    # Run analysis pipeline
+    # Compute basic metrics
+    word_count = len(text.split())
+
+    # Run analysis pipeline for richer metadata
     analysis = analyze_text(text)
 
     # Extract safe fields
     summary = analysis.get("summary")
     themes = analysis.get("themes")
+    topics = analysis.get("topics")
     emotions = analysis.get("emotions")
+    people = analysis.get("people")
+    places = analysis.get("places")
     memory_chunks = analysis.get("memory_chunks")
 
     themes_str = ", ".join(themes) if isinstance(themes, list) else None
-    emotions_str = ", ".join(emotions) if isinstance(emotions, list) else None
+    topics_str = ", ".join(topics) if isinstance(topics, list) else None
+    # Extract emotion names for quick display
+    emotion_names = []
+    emotion_score_map = {}
+    if isinstance(emotions, list):
+        for emo in emotions:
+            name = emo.get("name") if isinstance(emo, dict) else None
+            score = emo.get("score") if isinstance(emo, dict) else None
+            if name:
+                emotion_names.append(name)
+            if name is not None and score is not None:
+                try:
+                    emotion_score_map[name] = float(score)
+                except (TypeError, ValueError):
+                    continue
+    emotions_str = ", ".join(emotion_names) if emotion_names else None
+    emotion_scores_str = json.dumps(emotion_score_map) if emotion_score_map else None
+    people_str = ", ".join(people) if isinstance(people, list) else None
+    places_str = ", ".join(places) if isinstance(places, list) else None
     memory_chunks_str = json.dumps(memory_chunks) if memory_chunks else None
 
     # Store in database
@@ -51,7 +75,12 @@ async def process_entry(text: Optional[str], file: Optional[UploadFile]):
             summary=summary,
             themes=themes_str,
             emotions=emotions_str,
+            emotion_scores=emotion_scores_str,
+            topics=topics_str,
+            people=people_str,
+            places=places_str,
             memory_chunks=memory_chunks_str,
+            word_count=word_count,
         )
         session.add(entry)
         session.commit()
@@ -64,4 +93,5 @@ async def process_entry(text: Optional[str], file: Optional[UploadFile]):
         "analysis": analysis,
         "transcription_meta": transcript_meta,
         "message": "Entry processed and stored successfully",
+        "word_count": word_count,
     }

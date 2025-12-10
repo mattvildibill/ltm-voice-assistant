@@ -9,11 +9,16 @@ from app.routers.entries import router as entries_router
 from app.routers.health import router as health_router
 from app.routers.prompts import router as prompts_router
 from app.routers.insights import router as insights_router
+from app.db.database import init_db, migrate_db
 
 app = FastAPI()
 
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR / "frontend"
+
+# Ensure tables and new metadata columns exist
+init_db()
+migrate_db()
 
 # ⭐ ABSOLUTE REQUIRED CORS ⭐
 app.add_middleware(

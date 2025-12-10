@@ -1,6 +1,7 @@
+import json
 from collections import Counter
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -24,6 +25,12 @@ class EntryPreview(BaseModel):
     created_at: datetime
     preview: str
     summary: Optional[str] = None
+    topics: List[str] = []
+    emotions: List[str] = []
+    emotion_scores: Dict[str, float] = {}
+    people: List[str] = []
+    places: List[str] = []
+    word_count: Optional[int] = None
 
 
 class EntriesPerDay(BaseModel):
@@ -34,7 +41,12 @@ class EntriesPerDay(BaseModel):
 class InsightsSummary(BaseModel):
     total_entries: int
     total_words: int
+    average_word_count: float
     entries_per_day: List[EntriesPerDay]
+    top_emotions: List[str] = []
+    top_topics: List[str] = []
+    top_people: List[str] = []
+    top_places: List[str] = []
 
 
 class InsightsQueryRequest(BaseModel):
@@ -50,7 +62,7 @@ class InsightsQueryResponse(BaseModel):
 def list_entries(session: Session = Depends(get_db_session)):
     """
     Return entry previews for the Insights tab.
-    JSON: [{"id":1,"created_at":"ISO","preview":"text","summary":"..."}]
+    JSON: [{"id":1,"created_at":"ISO","preview":"text","summary":"...","topics":[],"emotions":[],"word_count":0}]
     """
     entries = session.exec(select(Entry).order_by(Entry.created_at.desc())).all()
 
@@ -66,6 +78,12 @@ def list_entries(session: Session = Depends(get_db_session)):
                 created_at=entry.created_at,
                 preview=preview_text,
                 summary=entry.summary,
+                topics=_split(entry.topics),
+                emotions=_split(entry.emotions),
+                emotion_scores=_json_to_dict(entry.emotion_scores),
+                people=_split(entry.people),
+                places=_split(entry.places),
+                word_count=entry.word_count,
             )
         )
 
@@ -76,16 +94,26 @@ def list_entries(session: Session = Depends(get_db_session)):
 def get_summary(session: Session = Depends(get_db_session)):
     """
     Basic aggregate stats.
-    JSON: {"total_entries":0,"total_words":0,"entries_per_day":[{"date":"YYYY-MM-DD","count":1}]}
+    JSON: {"total_entries":0,"total_words":0,"average_word_count":0,"entries_per_day":[...]}
     """
     entries = session.exec(select(Entry)).all()
     total_entries = len(entries)
-    total_words = sum(len((entry.original_text or "").split()) for entry in entries)
+    total_words = sum(entry.word_count or len((entry.original_text or "").split()) for entry in entries)
+    average_word_count = (total_words / total_entries) if total_entries else 0
 
     counts = Counter()
+    topic_counts = Counter()
+    emotion_counts = Counter()
+    people_counts = Counter()
+    places_counts = Counter()
+
     for entry in entries:
         date_str = entry.created_at.date().isoformat()
         counts[date_str] += 1
+        topic_counts.update(_split(entry.topics))
+        emotion_counts.update(_split(entry.emotions))
+        people_counts.update(_split(entry.people))
+        places_counts.update(_split(entry.places))
 
     entries_per_day = [
         EntriesPerDay(date=date, count=count) for date, count in sorted(counts.items())
@@ -94,7 +122,12 @@ def get_summary(session: Session = Depends(get_db_session)):
     return InsightsSummary(
         total_entries=total_entries,
         total_words=total_words,
+        average_word_count=average_word_count,
         entries_per_day=entries_per_day,
+        top_emotions=_top_keys(emotion_counts),
+        top_topics=_top_keys(topic_counts),
+        top_people=_top_keys(people_counts),
+        top_places=_top_keys(places_counts),
     )
 
 
@@ -158,3 +191,33 @@ async def query_insights(
         answer = "I could not generate an answer from the stored entries."
 
     return InsightsQueryResponse(answer=answer, used_entry_ids=used_ids)
+
+
+def _split(value: Optional[str]) -> List[str]:
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _json_to_dict(value: Optional[str]) -> Dict[str, float]:
+    if not value:
+        return {}
+    try:
+        data = json.loads(value)
+        if isinstance(data, dict):
+            return {k: float(v) for k, v in data.items() if _is_number(v)}
+    except Exception:
+        return {}
+    return {}
+
+
+def _is_number(val) -> bool:
+    try:
+        float(val)
+        return True
+    except Exception:
+        return False
+
+
+def _top_keys(counter: Counter, limit: int = 5) -> List[str]:
+    return [item for item, _ in counter.most_common(limit) if item]

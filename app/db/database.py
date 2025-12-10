@@ -1,4 +1,6 @@
 import os
+from typing import Iterable, Tuple
+
 from sqlmodel import SQLModel, create_engine, Session
 
 # Location of your SQLite DB file
@@ -13,6 +15,38 @@ def init_db() -> None:
     # Import here to avoid circular import issues
     from app.models.entry import Entry  
     SQLModel.metadata.create_all(engine)
+
+
+def _ensure_columns_exist(
+    table: str, columns: Iterable[Tuple[str, str]]
+) -> None:
+    """
+    Lightweight, idempotent migration helper for SQLite.
+    Adds missing columns with provided SQL types.
+    """
+    with engine.connect() as conn:
+        existing = {
+            row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")
+        }
+        for name, type_sql in columns:
+            if name not in existing:
+                conn.exec_driver_sql(
+                    f"ALTER TABLE {table} ADD COLUMN {name} {type_sql}"
+                )
+
+
+def migrate_db() -> None:
+    """Ensure new metadata columns exist for entries."""
+    _ensure_columns_exist(
+        "entry",
+        [
+            ("emotion_scores", "TEXT"),
+            ("topics", "TEXT"),
+            ("people", "TEXT"),
+            ("places", "TEXT"),
+            ("word_count", "INTEGER"),
+        ],
+    )
 
 
 def get_session() -> Session:

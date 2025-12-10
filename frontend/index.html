@@ -109,6 +109,7 @@
         padding: 10px 8px;
         border-bottom: 1px solid #1f1f1f;
         text-align: left;
+        vertical-align: top;
       }
       th {
         color: #a6b7d3;
@@ -117,6 +118,37 @@
       }
       tr:hover {
         background: #141822;
+      }
+      .chip {
+        display: inline-block;
+        padding: 4px 8px;
+        margin: 0 6px 6px 0;
+        border-radius: 999px;
+        background: #1d2433;
+        color: #dfe8ff;
+        font-size: 12px;
+        border: 1px solid #253149;
+      }
+      .chip.muted {
+        background: #1a1a1a;
+        color: var(--muted);
+        border: 1px solid #222;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        margin: 0 6px 6px 0;
+        border-radius: 10px;
+        background: #142238;
+        color: #eaf1ff;
+        font-size: 12px;
+        border: 1px solid #1f2c44;
+      }
+      .badge .score {
+        color: #8ed1c2;
+        font-weight: 600;
       }
       .muted {
         color: var(--muted);
@@ -208,8 +240,11 @@
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Preview</th>
                 <th>Summary</th>
+                <th>Emotions</th>
+                <th>Topics</th>
+                <th>People / Places</th>
+                <th>Words</th>
               </tr>
             </thead>
             <tbody id="entriesBody"></tbody>
@@ -397,15 +432,30 @@
           const dateTd = document.createElement("td");
           dateTd.textContent = new Date(entry.created_at).toLocaleString();
 
-          const previewTd = document.createElement("td");
-          previewTd.textContent = entry.preview || "";
-
           const summaryTd = document.createElement("td");
-          summaryTd.textContent = entry.summary || "—";
+          summaryTd.innerHTML = `<div>${entry.summary || entry.preview || "—"}</div>`;
+
+          const emotionsTd = document.createElement("td");
+          emotionsTd.appendChild(renderEmotions(entry));
+
+          const topicsTd = document.createElement("td");
+          topicsTd.appendChild(renderChips(entry.topics, "muted", "No topics"));
+
+          const entitiesTd = document.createElement("td");
+          const people = renderChips(entry.people, "", "No people");
+          const places = renderChips(entry.places, "muted", "No places");
+          entitiesTd.appendChild(people);
+          entitiesTd.appendChild(places);
+
+          const wordsTd = document.createElement("td");
+          wordsTd.textContent = entry.word_count ?? "-";
 
           tr.appendChild(dateTd);
-          tr.appendChild(previewTd);
           tr.appendChild(summaryTd);
+          tr.appendChild(emotionsTd);
+          tr.appendChild(topicsTd);
+          tr.appendChild(entitiesTd);
+          tr.appendChild(wordsTd);
           entriesBody.appendChild(tr);
         });
       }
@@ -431,10 +481,18 @@
           return;
         }
 
-        const { total_entries, total_words, entries_per_day } = data;
-        summaryText.textContent = `You've created ${total_entries} entries with ${total_words} total words.`;
+        const { total_entries, total_words, average_word_count, entries_per_day, top_emotions, top_topics, top_people, top_places } = data;
+        summaryText.textContent = `You've created ${total_entries} entries with ${total_words} total words (avg ${average_word_count.toFixed(1)} words/entry).`;
+
+        const metaWrap = document.createElement("div");
+        metaWrap.style.marginTop = "8px";
+        metaWrap.appendChild(makeMetaRow("Top emotions", top_emotions));
+        metaWrap.appendChild(makeMetaRow("Top topics", top_topics));
+        metaWrap.appendChild(makeMetaRow("People", top_people));
+        metaWrap.appendChild(makeMetaRow("Places", top_places));
 
         entriesChart.innerHTML = "";
+        entriesChart.appendChild(metaWrap);
         if (!entries_per_day || entries_per_day.length === 0) {
           const empty = document.createElement("div");
           empty.className = "muted";
@@ -472,6 +530,79 @@
           row.appendChild(count);
           entriesChart.appendChild(row);
         });
+      }
+
+      function renderEmotions(entry) {
+        const container = document.createElement("div");
+        const scores = entry.emotion_scores || {};
+        const names = Object.keys(scores);
+
+        if (names.length === 0 && (!entry.emotions || entry.emotions.length === 0)) {
+          container.textContent = "—";
+          container.className = "muted";
+          return container;
+        }
+
+        const sorted = names
+          .map((name) => ({ name, score: scores[name] }))
+          .sort((a, b) => (b.score || 0) - (a.score || 0))
+          .slice(0, 3);
+
+        sorted.forEach(({ name, score }) => {
+          const badge = document.createElement("span");
+          badge.className = "badge";
+          badge.innerHTML = `<span>${name}</span><span class="score">${Math.round(score * 100)}%</span>`;
+          container.appendChild(badge);
+        });
+
+        if (sorted.length === 0 && entry.emotions) {
+          entry.emotions.slice(0, 3).forEach((name) => {
+            const badge = document.createElement("span");
+            badge.className = "chip";
+            badge.textContent = name;
+            container.appendChild(badge);
+          });
+        }
+        return container;
+      }
+
+      function renderChips(items, extraClass = "", emptyText = "") {
+        const wrap = document.createElement("div");
+        if (!items || items.length === 0) {
+          if (emptyText) {
+            const chip = document.createElement("span");
+            chip.className = `chip ${extraClass} muted`.trim();
+            chip.textContent = emptyText;
+            wrap.appendChild(chip);
+          }
+          return wrap;
+        }
+        items.forEach((item) => {
+          const chip = document.createElement("span");
+          chip.className = `chip ${extraClass}`.trim();
+          chip.textContent = item;
+          wrap.appendChild(chip);
+        });
+        return wrap;
+      }
+
+      function makeMetaRow(labelText, items) {
+        const row = document.createElement("div");
+        row.style.marginBottom = "6px";
+        row.style.display = "flex";
+        row.style.alignItems = "center";
+        row.style.gap = "10px";
+
+        const label = document.createElement("div");
+        label.className = "muted";
+        label.textContent = `${labelText}:`;
+
+        const content = document.createElement("div");
+        content.appendChild(renderChips(items, "", "—"));
+
+        row.appendChild(label);
+        row.appendChild(content);
+        return row;
       }
 
       async function askQuestion() {
