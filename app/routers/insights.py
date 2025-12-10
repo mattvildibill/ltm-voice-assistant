@@ -319,6 +319,7 @@ def _build_recap(period: str, days: int, session: Session) -> RecapResponse:
     topic_counts = Counter()
     people_counts = Counter()
     places_counts = Counter()
+    sentiment_scores: List[float] = []
 
     mood_points: List[MoodPoint] = []
     for entry in entries:
@@ -326,6 +327,8 @@ def _build_recap(period: str, days: int, session: Session) -> RecapResponse:
         topic_counts.update(_split(entry.topics))
         people_counts.update(_split(entry.people))
         places_counts.update(_split(entry.places))
+        if entry.sentiment_score is not None:
+            sentiment_scores.append(entry.sentiment_score)
 
         scores = _json_to_dict(entry.emotion_scores)
         if scores:
