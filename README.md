@@ -10,7 +10,7 @@ A lightweight life-story memory tool: record short voice notes, transcribe them 
 - SQLite persistence via SQLModel (`ltm.db` by default).
 - Simple frontend (`frontend/index.html`) with two tabs:
   - **Capture**: record audio and send it to the API.
-  - **Insights & Q&A**: browse stored entries with metadata (emotions, topics, entities, word counts), view stats, and ask questions grounded in your data.
+  - **Insights & Q&A**: browse stored entries with metadata (emotions, topics, entities, word counts), view stats, ask grounded questions, and hold a conversation with your memories.
 - Daily prompt helper at `GET /prompt/daily`.
  
 ### Insights endpoints (new)
@@ -66,6 +66,7 @@ API base: `http://127.0.0.1:8000`
 - `GET /insights/entries` – Entry previews for the Insights tab.
 - `GET /insights/summary` – Aggregate stats.
 - `POST /insights/query` – Ask a question grounded in stored entries.
+- `POST /conversation/respond` – Send a conversational message with history; returns a grounded reply and referenced entry ids.
 - `GET /health` – Basic health check.
 
 ## Notes

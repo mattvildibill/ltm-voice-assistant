@@ -9,6 +9,7 @@ from app.routers.entries import router as entries_router
 from app.routers.health import router as health_router
 from app.routers.prompts import router as prompts_router
 from app.routers.insights import router as insights_router
+from app.routers.conversation import router as conversation_router
 from app.db.database import init_db, migrate_db
 
 app = FastAPI()
@@ -34,6 +35,7 @@ app.include_router(entries_router)
 app.include_router(health_router)
 app.include_router(prompts_router)
 app.include_router(insights_router)
+app.include_router(conversation_router)
 
 # Serve the static UI so hitting "/" doesn't 404
 if FRONTEND_DIR.exists():
