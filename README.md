@@ -1,16 +1,18 @@
 # LTM Voice Assistant
 
-A lightweight life-story memory tool: record short voice notes, transcribe them with OpenAI, analyze the text, and store the results in SQLite through a FastAPI backend. The bundled HTML UI records audio in the browser and posts it to the backend.
+A personal life-story memory tool: record voice notes, transcribe with OpenAI, analyze them into structured memories, and explore them via a timeline, insights, recaps, and chat grounded only in your own entries.
 
 ## Features
-- FastAPI backend with CORS enabled for local dev.
-- Endpoint `POST /entries` accepts audio (`multipart/form-data`) or raw text; audio is transcribed with `gpt-4o-transcribe`.
-- Entry analysis via OpenAI (summary, themes, emotions + scores, topics, people/places, memory chunks, word count) using `gpt-4o-mini`.
-- Embedding-based retrieval for Q&A using `text-embedding-3-small` to ground answers in the most relevant past entries.
-- SQLite persistence via SQLModel (`ltm.db` by default).
-- Simple frontend (`frontend/index.html`) with two tabs:
-  - **Capture**: record audio and send it to the API.
-  - **Insights & Q&A**: browse stored entries with metadata (emotions, topics, entities, word counts), view stats, ask grounded questions, hold a conversation with your memories, and generate weekly/monthly recaps.
+- FastAPI backend with CORS for local dev.
+- Capture: `POST /entries` accepts audio (`multipart/form-data`) or text; audio is transcribed with `gpt-4o-transcribe`.
+- Analysis: OpenAI (`gpt-4o-mini`) produces summary, themes, topics, sentiment (label + score), people/places, emotions, memory chunks, word count; embeddings (`text-embedding-3-small`) stored for retrieval.
+- Retrieval: semantic search powers Q&A and conversation grounded only in stored entries.
+- Recaps: weekly/monthly recaps synthesized from local stats + entry snippets.
+- Persistence: SQLite via SQLModel (`ltm.db` by default) with Alembic migrations.
+- Frontend (`frontend/index.html`), three tabs:
+  - **Capture**: recorder + recent entries.
+  - **Timeline**: filters (7/30/all) + expandable entry cards with sentiment and topics.
+  - **Insights & Chat**: summary stats with entries/day chart, weekly recap, and chat grounded in your memories.
 - Daily prompt helper at `GET /prompt/daily`.
  
 ### Insights endpoints (new)
@@ -21,8 +23,8 @@ A lightweight life-story memory tool: record short voice notes, transcribe them 
 ## Project Structure
 - `main.py` – FastAPI app, mounts routers and serves the static frontend.
 - `app/routers/` – API routes (`entries`, `health`, `prompts`, `insights`, `conversation`).
-- `app/services/` – Transcription, OpenAI analysis, and entry handling.
-- `app/db/` – Database setup and session helper.
+- `app/services/` – Transcription, OpenAI analysis, entry handling, embeddings.
+- `app/db/` – Database setup, session helper.
 - `app/models/` – SQLModel entry definition.
 - `frontend/` – Vanilla HTML/JS UI for recording and sending entries.
 - `app/core/config.py` – Pydantic settings for env vars.
@@ -77,6 +79,7 @@ API base: `http://127.0.0.1:8000`
 - `GET /health` – Basic health check.
 
 ## Notes
+- Only your data: all analysis and retrieval are grounded in your stored entries; no external browsing.
 - The backend uses OpenAI; make sure the `.env` file is loaded before running.
 - `ltm.db` is ignored by git; delete it if you want a fresh database.
 - Update CORS or host settings in `main.py` if you deploy beyond local dev.
