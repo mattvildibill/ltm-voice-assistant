@@ -336,7 +336,7 @@
 
       <div class="panel">
         <h2>Conversation</h2>
-        <p class="muted">Chat with your stored memories. Follow-ups reuse the conversation history.</p>
+        <p class="muted">Chat with your stored memories. Answers use only your saved entries.</p>
         <div id="chatPane" class="chat-pane"></div>
         <div class="chat-input">
           <textarea id="chatInput" placeholder="Ask a follow-up..."></textarea>
@@ -735,8 +735,7 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              message: text,
-              history: conversationHistory.map(({ role, content }) => ({ role, content })),
+              messages: conversationHistory.map(({ role, content }) => ({ role, content })),
             }),
           });
 

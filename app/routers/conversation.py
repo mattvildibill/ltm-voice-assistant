@@ -1,6 +1,5 @@
-import math
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -8,7 +7,7 @@ from sqlmodel import Session, select
 
 from app.db.database import get_session
 from app.models.entry import Entry
-from app.services.embedding_service import embed_text, deserialize_embedding
+from app.services.embedding_service import find_similar_entries
 from app.services.openai_service import client
 
 router = APIRouter(prefix="/conversation", tags=["conversation"])
@@ -20,8 +19,7 @@ class ConversationTurn(BaseModel):
 
 
 class ConversationRequest(BaseModel):
-    message: str
-    history: List[ConversationTurn] = Field(default_factory=list)
+    messages: List[ConversationTurn] = Field(default_factory=list)
 
 
 class ConversationResponse(BaseModel):
@@ -45,19 +43,19 @@ async def conversation_respond(
     payload: ConversationRequest, session: Session = Depends(get_db_session)
 ):
     """
-    Chat with stored entries. Uses embeddings to retrieve relevant memories.
-    JSON in: {"message":"...","history":[{"role":"user","content":"..."}, ...]}
+    Chat with stored entries using embeddings to retrieve context.
+    JSON in: {"messages":[{"role":"user","content":"..."}, ...]}
     JSON out: {"response":"...","used_entry_ids":[1,2]}
     """
-    message = payload.message.strip()
-    if not message:
+    messages_in = payload.messages[-MAX_HISTORY:] if payload.messages else []
+    if not messages_in or messages_in[-1].role != "user":
+        raise HTTPException(status_code=400, detail="A final user message is required.")
+
+    user_message = messages_in[-1].content.strip()
+    if not user_message:
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
 
-    # Merge provided history with server-side state (favor client-provided)
-    history = payload.history or conversation_state["messages"]
-    history = history[-MAX_HISTORY:]
-
-    entries = _fetch_similar_entries(message, session, top_k=6)
+    entries = _fetch_similar_entries(user_message, session, top_k=6)
     if not entries:
         raise HTTPException(
             status_code=404, detail="No entries available for conversation yet."
@@ -87,12 +85,9 @@ async def conversation_respond(
             "content": "Relevant entries:\n" + "\n".join(entry_context_lines),
         }
     )
-    # Add prior conversation to keep continuity
-    for turn in history:
+    for turn in messages_in:
         if turn.role in ("user", "assistant"):
             messages.append({"role": turn.role, "content": turn.content})
-
-    messages.append({"role": "user", "content": message})
 
     try:
         response = client.chat.completions.create(
@@ -109,10 +104,11 @@ async def conversation_respond(
     if not reply:
         reply = "I could not generate a response from your stored entries."
 
-    # Update in-memory state
-    conversation_state["messages"].extend(
-        [ConversationTurn(role="user", content=message), ConversationTurn(role="assistant", content=reply)]
-    )
+    # Update in-memory state as a single-user cache
+    conversation_state["messages"] = (conversation_state["messages"] + messages_in)[
+        -MAX_HISTORY:
+    ]
+    conversation_state["messages"].append(ConversationTurn(role="assistant", content=reply))
     conversation_state["messages"] = conversation_state["messages"][-MAX_HISTORY:]
 
     return ConversationResponse(response=reply, used_entry_ids=used_ids)
@@ -125,37 +121,10 @@ def _fetch_similar_entries(
     Embed the question and retrieve top-k entries by cosine similarity.
     Falls back to recent entries if embeddings are missing.
     """
-    question_vec = embed_text(question)
-    if not question_vec:
-        return (
-            session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(top_k)).all()
-        )
-
     entries = session.exec(select(Entry)).all()
-    scored: List[Tuple[float, Entry]] = []
-    for entry in entries:
-        vec = deserialize_embedding(entry.embedding)
-        if not vec:
-            continue
-        sim = _cosine_similarity(question_vec, vec)
-        if sim is not None:
-            scored.append((sim, entry))
-
-    if not scored:
-        return (
-            session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(top_k)).all()
-        )
-
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [entry for _, entry in scored[:top_k]]
-
-
-def _cosine_similarity(a: List[float], b: List[float]) -> Optional[float]:
-    if not a or not b or len(a) != len(b):
-        return None
-    dot = sum(x * y for x, y in zip(a, b))
-    norm_a = math.sqrt(sum(x * x for x in a))
-    norm_b = math.sqrt(sum(y * y for y in b))
-    if norm_a == 0 or norm_b == 0:
-        return None
-    return dot / (norm_a * norm_b)
+    scored = find_similar_entries(question, entries, top_k=top_k)
+    if scored:
+        return [entry for _, entry in scored]
+    return (
+        session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(top_k)).all()
+    )
