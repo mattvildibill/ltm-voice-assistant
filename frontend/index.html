@@ -1,924 +1,541 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>Life Story Voice Journal</title>
-    <style>
-      :root {
-        --bg: #0f0f0f;
-        --panel: #171717;
-        --muted: #bbbbbb;
-        --accent: #5b8def;
-        --accent-2: #6dd8b5;
-      }
-      body {
-        font-family: Arial, sans-serif;
-        background-color: var(--bg);
-        color: #eee;
-        padding: 30px;
-        max-width: 1100px;
-        margin: 0 auto;
-      }
-      h1 {
-        margin-top: 0;
-        letter-spacing: 0.5px;
-      }
-      h2 {
-        margin: 0 0 10px;
-      }
-      p {
-        color: var(--muted);
-      }
-      button {
-        padding: 10px 18px;
-        background: #2a2a2a;
-        color: #fff;
-        font-size: 16px;
-        cursor: pointer;
-        border: 1px solid #333;
-        border-radius: 6px;
-        margin-top: 10px;
-        margin-right: 10px;
-      }
-      button.primary {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: #0b1221;
-        font-weight: 600;
-      }
-      button[disabled] {
-        opacity: 0.6;
-        cursor: default;
-      }
-      .tabs {
-        display: flex;
-        gap: 10px;
-        margin: 20px 0;
-      }
-      .tab-btn {
-        padding: 12px 20px;
-        border-radius: 10px;
-        border: 1px solid #222;
-        background: #161616;
-        color: #ddd;
-      }
-      .tab-btn.active {
-        background: linear-gradient(135deg, #22304c, #1e283a);
-        border-color: #2e3d5b;
-        color: #fff;
-      }
-      .tab-content {
-        display: none;
-      }
-      .tab-content.active {
-        display: block;
-      }
-      .panel {
-        background: var(--panel);
-        border: 1px solid #1f1f1f;
-        border-radius: 10px;
-        padding: 18px;
-        margin-bottom: 16px;
-      }
-      #log {
-        white-space: pre-wrap;
-        margin-top: 12px;
-        font-size: 14px;
-        background: #0f1218;
-        padding: 15px;
-        border-radius: 6px;
-        max-height: 280px;
-        overflow-y: auto;
-        border: 1px solid #1b2335;
-      }
-      #status {
-        margin-top: 8px;
-        font-style: italic;
-        color: var(--muted);
-      }
-      .grid {
-        display: grid;
-        gap: 12px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
-      }
-      th, td {
-        padding: 10px 8px;
-        border-bottom: 1px solid #1f1f1f;
-        text-align: left;
-        vertical-align: top;
-      }
-      th {
-        color: #a6b7d3;
-        font-weight: 600;
-        letter-spacing: 0.3px;
-      }
-      tr:hover {
-        background: #141822;
-      }
-      .chip {
-        display: inline-block;
-        padding: 4px 8px;
-        margin: 0 6px 6px 0;
-        border-radius: 999px;
-        background: #1d2433;
-        color: #dfe8ff;
-        font-size: 12px;
-        border: 1px solid #253149;
-      }
-      .chip.muted {
-        background: #1a1a1a;
-        color: var(--muted);
-        border: 1px solid #222;
-      }
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        margin: 0 6px 6px 0;
-        border-radius: 10px;
-        background: #142238;
-        color: #eaf1ff;
-        font-size: 12px;
-        border: 1px solid #1f2c44;
-      }
-      .badge .score {
-        color: #8ed1c2;
-        font-weight: 600;
-      }
-      .muted {
-        color: var(--muted);
-        font-size: 14px;
-      }
-      .chart {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-top: 10px;
-      }
-      .bar-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .bar-label {
-        width: 110px;
-        color: var(--muted);
-        font-size: 13px;
-      }
-      .bar-track {
-        flex: 1;
-        height: 14px;
-        background: #1b1b1b;
-        border-radius: 6px;
-        overflow: hidden;
-        border: 1px solid #222;
-      }
-      .bar-fill {
-        height: 100%;
-        background: linear-gradient(90deg, var(--accent), var(--accent-2));
-      }
-      textarea {
-        width: 100%;
-        min-height: 90px;
-        background: #121212;
-        color: #eee;
-        border: 1px solid #222;
-        border-radius: 8px;
-        padding: 10px;
-        font-size: 15px;
-      }
-      .answer-box {
-        background: #0f1218;
-        border: 1px solid #1f2a40;
-        border-radius: 10px;
-        padding: 14px;
-        margin-top: 10px;
-        line-height: 1.5;
-      }
-      .hidden {
-        display: none;
-      }
-      .used-entries {
-        margin-top: 10px;
-        padding: 10px;
-        border: 1px dashed #2b3a55;
-        border-radius: 8px;
-        background: #0f141f;
-      }
-      .used-entry {
-        margin-bottom: 8px;
-      }
-      .used-entry time {
-        color: var(--muted);
-        font-size: 12px;
-      }
-      .chat-pane {
-        background: #0f1218;
-        border: 1px solid #1f2437;
-        border-radius: 10px;
-        padding: 12px;
-        max-height: 340px;
-        overflow-y: auto;
-      }
-      .bubble {
-        max-width: 80%;
-        padding: 10px 12px;
-        border-radius: 12px;
-        margin: 8px 0;
-        line-height: 1.4;
-      }
-      .bubble.user {
-        background: #203459;
-        margin-left: auto;
-        color: #e8f1ff;
-      }
-      .bubble.assistant {
-        background: #1a1a1a;
-        border: 1px solid #222;
-        color: #e4e4e4;
-      }
-      .bubble-meta {
-        font-size: 12px;
-        color: var(--muted);
-        margin-top: 4px;
-      }
-      .chat-input {
-        display: flex;
-        gap: 10px;
-        margin-top: 10px;
-      }
-      .chat-input textarea {
-        flex: 1;
-        min-height: 60px;
-      }
-      .recap-card {
-        border: 1px solid #1f2c44;
-        border-radius: 10px;
-        padding: 12px;
-        background: #0f1218;
-        margin-top: 10px;
-      }
-      .recap-grid {
-        display: grid;
-        gap: 10px;
-      }
-      .recap-meta {
-        color: var(--muted);
-        font-size: 13px;
-        margin-bottom: 6px;
-      }
-    </style>
-  </head>
-
-  <body>
+  <meta charset="UTF-8" />
+  <title>Life Story Voice Journal</title>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --panel: #161616;
+      --muted: #b7b7b7;
+      --accent: #5b8def;
+      --accent-2: #6dd8b5;
+      --border: #242424;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: #f5f5f5;
+      margin: 0;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .container { width: 100%; max-width: 1100px; }
+    h1 { margin: 0 0 6px; letter-spacing: 0.6px; }
+    p { color: var(--muted); }
+    .tabs { display: flex; gap: 10px; margin: 18px 0; }
+    .tab-btn {
+      padding: 12px 18px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #1a1a1a;
+      color: #ddd;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #22304c, #1e283a);
+      border-color: #2e3d5b;
+      color: #fff;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    button {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #222;
+      color: #fff;
+      cursor: pointer;
+    }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #0b1221; font-weight: 600; }
+    button[disabled] { opacity: 0.6; cursor: default; }
+    #log {
+      white-space: pre-wrap;
+      margin-top: 10px;
+      font-size: 14px;
+      background: #0f1218;
+      padding: 12px;
+      border-radius: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #1b2335;
+    }
+    #status { margin-top: 6px; font-style: italic; color: var(--muted); }
+    .muted { color: var(--muted); }
+    .pill {
+      display: inline-block;
+      padding: 4px 8px;
+      background: #1e2a3f;
+      border: 1px solid #273654;
+      color: #dfe6ff;
+      border-radius: 999px;
+      margin: 0 6px 6px 0;
+      font-size: 12px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge.positive { background: #183324; color: #7be3a6; border: 1px solid #2b5b40; }
+    .badge.neutral { background: #262626; color: #c7c7c7; border: 1px solid #3a3a3a; }
+    .badge.negative { background: #3a1e1e; color: #f39a9a; border: 1px solid #5a2c2c; }
+    .entry-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      background: #131313;
+      margin-bottom: 10px;
+    }
+    .entry-header { display: flex; justify-content: space-between; gap: 8px; }
+    .entry-body { margin-top: 8px; }
+    .entry-meta { font-size: 12px; color: var(--muted); }
+    .expand {
+      cursor: pointer;
+      color: var(--accent-2);
+      font-size: 13px;
+      margin-top: 6px;
+      display: inline-block;
+    }
+    .chat-pane {
+      background: #0f1218;
+      border: 1px solid #1f2437;
+      border-radius: 10px;
+      padding: 12px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .bubble {
+      max-width: 80%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      margin: 8px 0;
+      line-height: 1.4;
+    }
+    .bubble.user { background: #203459; margin-left: auto; color: #e8f1ff; }
+    .bubble.assistant { background: #1a1a1a; border: 1px solid #222; color: #e4e4e4; }
+    .bubble-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .chat-input { display: flex; gap: 10px; margin-top: 10px; }
+    .chat-input textarea { flex: 1; min-height: 70px; background: #121212; color: #eee; border: 1px solid #222; border-radius: 8px; padding: 8px; }
+    .chart { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .bar-row { display: flex; align-items: center; gap: 8px; }
+    .bar-label { width: 110px; color: var(--muted); font-size: 13px; }
+    .bar-track { flex: 1; height: 14px; background: #1b1b1b; border-radius: 6px; overflow: hidden; border: 1px solid #222; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+    .recap-card { border: 1px solid #1f2c44; border-radius: 10px; padding: 12px; background: #0f1218; margin-top: 10px; }
+    textarea { width: 100%; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
     <h1>Life Story Voice Assistant</h1>
-    <p>
-      Capture new memories or explore insights from what you've already shared.
-    </p>
+    <p>Capture memories, browse your timeline, and chat with insights grounded in your entries.</p>
 
     <div class="tabs">
       <button class="tab-btn active" data-tab="capture">Capture</button>
-      <button class="tab-btn" data-tab="insights">Insights &amp; Q&amp;A</button>
+      <button class="tab-btn" data-tab="timeline">Timeline</button>
+      <button class="tab-btn" data-tab="insights">Insights &amp; Chat</button>
     </div>
 
+    <!-- Capture Tab -->
     <section id="capture" class="tab-content active">
-      <div class="panel">
+      <div class="card">
         <h2>Record / Upload entry</h2>
-        <p class="muted">
-          Click <strong>Start Recording</strong>, tell a story, then click
-          <strong>Stop &amp; Save</strong>. Audio is transcribed, analyzed, and stored.
-        </p>
+        <p class="muted">Click <strong>Start Recording</strong>, tell a story, then click <strong>Stop &amp; Save</strong>. Audio is transcribed, analyzed, and stored.</p>
         <button id="startBtn" class="primary">🎤 Start Recording</button>
         <button id="stopBtn" disabled>🛑 Stop &amp; Save</button>
         <div id="status">Not recording.</div>
         <div id="log"></div>
       </div>
+      <div class="card">
+        <h3>Recent entries</h3>
+        <div id="recentEntries" class="muted">Loading…</div>
+      </div>
     </section>
 
-    <section id="insights" class="tab-content">
-      <div class="panel">
-        <h2>Your Entries</h2>
-        <div class="muted" id="entriesStatus">Loading entries…</div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Summary</th>
-                <th>Emotions</th>
-                <th>Topics</th>
-                <th>People / Places</th>
-                <th>Words</th>
-              </tr>
-            </thead>
-            <tbody id="entriesBody"></tbody>
-          </table>
+    <!-- Timeline Tab -->
+    <section id="timeline" class="tab-content">
+      <div class="card">
+        <h2>Browse your timeline</h2>
+        <div style="margin-bottom:10px;">
+          <button class="primary" data-range="7" id="filter7">Last 7 days</button>
+          <button data-range="30" id="filter30">Last 30 days</button>
+          <button data-range="all" id="filterAll">All time</button>
         </div>
+        <div id="timelineStatus" class="muted">Loading…</div>
+        <div id="timelineList"></div>
       </div>
+    </section>
 
-      <div class="panel">
-        <h2>Analytics</h2>
-        <div class="muted" id="summaryText">Loading stats…</div>
+    <!-- Insights & Chat Tab -->
+    <section id="insights" class="tab-content">
+      <div class="card">
+        <h2>Insights</h2>
+        <div id="summaryText" class="muted">Loading stats…</div>
         <div id="entriesChart" class="chart"></div>
+        <button id="weeklyQuickBtn" class="primary" style="margin-top:8px;">Generate weekly recap</button>
+        <div id="weeklyQuickStatus" class="muted"></div>
+        <div id="weeklyQuickResult" class="recap-card hidden"></div>
       </div>
-
-      <div class="panel">
-        <h2>Ask a Question</h2>
-        <p class="muted">Ask anything you'd like to know based on your stored entries.</p>
-        <textarea id="questionInput" placeholder="What did I talk about last weekend?"></textarea>
-        <button id="askBtn" class="primary">Ask</button>
-        <div class="muted" id="askStatus"></div>
-        <div id="answerBox" class="answer-box hidden"></div>
-        <div id="answerMeta" class="muted hidden"></div>
-        <div id="usedEntries" class="used-entries hidden"></div>
-      </div>
-
-      <div class="panel">
-        <h2>Conversation</h2>
-        <p class="muted">Chat with your stored memories. Answers use only your saved entries.</p>
+      <div class="card">
+        <h2>Chat with your memories</h2>
+        <p class="muted">The assistant answers using only your stored entries.</p>
         <div id="chatPane" class="chat-pane"></div>
         <div class="chat-input">
-          <textarea id="chatInput" placeholder="Ask a follow-up..."></textarea>
+          <textarea id="chatInput" placeholder="Ask something..."></textarea>
           <button id="chatSendBtn" class="primary">Send</button>
         </div>
         <div class="muted" id="chatStatus"></div>
       </div>
-
-      <div class="panel">
-        <h2>Recaps</h2>
-        <p class="muted">Generate weekly or monthly snapshots of themes, mood, and highlights.</p>
-        <div class="recap-grid">
-          <div>
-            <button id="weeklyQuickBtn" class="primary">Generate weekly recap</button>
-            <div class="muted" id="weeklyQuickStatus"></div>
-            <div id="weeklyQuickResult" class="recap-card hidden"></div>
-          </div>
-          <div>
-            <button id="weeklyBtn">Generate detailed weekly recap</button>
-            <button id="monthlyBtn" style="margin-left:6px;">Generate monthly recap</button>
-            <div class="muted" id="recapStatus"></div>
-            <div id="recapResult" class="recap-card hidden"></div>
-          </div>
-        </div>
-      </div>
     </section>
+  </div>
 
-    <script>
-      const startBtn = document.getElementById("startBtn");
-      const stopBtn = document.getElementById("stopBtn");
-      const statusEl = document.getElementById("status");
-      const logEl = document.getElementById("log");
+  <script>
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const statusEl = document.getElementById("status");
+    const logEl = document.getElementById("log");
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const tabContents = document.querySelectorAll(".tab-content");
+    const recentEntriesEl = document.getElementById("recentEntries");
+    const timelineStatus = document.getElementById("timelineStatus");
+    const timelineList = document.getElementById("timelineList");
+    const summaryText = document.getElementById("summaryText");
+    const entriesChart = document.getElementById("entriesChart");
+    const weeklyQuickBtn = document.getElementById("weeklyQuickBtn");
+    const weeklyQuickStatus = document.getElementById("weeklyQuickStatus");
+    const weeklyQuickResult = document.getElementById("weeklyQuickResult");
+    const chatPane = document.getElementById("chatPane");
+    const chatInput = document.getElementById("chatInput");
+    const chatSendBtn = document.getElementById("chatSendBtn");
+    const chatStatus = document.getElementById("chatStatus");
 
-      const entriesBody = document.getElementById("entriesBody");
-      const entriesStatus = document.getElementById("entriesStatus");
-      const summaryText = document.getElementById("summaryText");
-      const entriesChart = document.getElementById("entriesChart");
-      const questionInput = document.getElementById("questionInput");
-      const askBtn = document.getElementById("askBtn");
-      const askStatus = document.getElementById("askStatus");
-      const answerBox = document.getElementById("answerBox");
-      const answerMeta = document.getElementById("answerMeta");
-      const usedEntries = document.getElementById("usedEntries");
-      const chatPane = document.getElementById("chatPane");
-      const chatInput = document.getElementById("chatInput");
-      const chatSendBtn = document.getElementById("chatSendBtn");
-      const chatStatus = document.getElementById("chatStatus");
-      const weeklyBtn = document.getElementById("weeklyBtn");
-      const monthlyBtn = document.getElementById("monthlyBtn");
-      const recapStatus = document.getElementById("recapStatus");
-      const recapResult = document.getElementById("recapResult");
-      const weeklyQuickBtn = document.getElementById("weeklyQuickBtn");
-      const weeklyQuickStatus = document.getElementById("weeklyQuickStatus");
-      const weeklyQuickResult = document.getElementById("weeklyQuickResult");
+    const filter7 = document.getElementById("filter7");
+    const filter30 = document.getElementById("filter30");
+    const filterAll = document.getElementById("filterAll");
 
-      let mediaRecorder = null;
-      let chunks = [];
-      let insightsLoadedOnce = false;
-      let conversationHistory = [];
-      let lastRecapType = null;
+    let mediaRecorder = null;
+    let chunks = [];
+    let conversationHistory = [];
+    let entriesCache = [];
+    let summaryCache = null;
 
-      // --- Capture tab logic (existing flow) ---
-      function log(msg) {
-        const time = new Date().toLocaleTimeString();
-        logEl.textContent += `[${time}] ${msg}\n`;
-        logEl.scrollTop = logEl.scrollHeight;
+    // --- Tab logic ---
+    function setActiveTab(tabName) {
+      tabButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tabName));
+      tabContents.forEach((section) => section.classList.toggle("active", section.id === tabName));
+
+      if (tabName === "timeline" || tabName === "capture" || tabName === "insights") {
+        loadEntries(); // shared cache
       }
+      if (tabName === "insights") {
+        loadSummary();
+      }
+    }
+    tabButtons.forEach((btn) => btn.addEventListener("click", () => setActiveTab(btn.dataset.tab)));
 
-      async function startRecording() {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          chunks = [];
+    // --- Capture (existing flow) ---
+    function log(msg) {
+      const time = new Date().toLocaleTimeString();
+      logEl.textContent += `[${time}] ${msg}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
 
-          mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) {
-              chunks.push(e.data);
+    async function startRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        chunks = [];
+
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+        mediaRecorder.onstop = async () => {
+          const blob = new Blob(chunks, { type: "audio/webm" });
+          log("Recording stopped. Uploading entry to backend…");
+          statusEl.textContent = "Uploading and processing entry…";
+          const formData = new FormData();
+          formData.append("file", blob, "entry.webm");
+
+          try {
+            const resp = await fetch("http://localhost:8000/entries", { method: "POST", body: formData });
+            if (!resp.ok) {
+              const text = await resp.text();
+              log(`❌ Server error: ${resp.status} – ${text}`);
+              statusEl.textContent = "Error uploading entry.";
+              return;
             }
-          };
+            await resp.json();
+            log("✅ Entry stored.");
+            statusEl.textContent = "Entry saved successfully.";
+            entriesCache = []; // force reload
+            loadEntries();
+            loadSummary();
+          } catch (err) {
+            console.error(err);
+            log("❌ Failed to upload entry: " + err.message);
+            statusEl.textContent = "Upload failed.";
+          }
+        };
 
-          mediaRecorder.onstop = async () => {
-            const blob = new Blob(chunks, { type: "audio/webm" });
-
-            log("Recording stopped. Uploading entry to backend…");
-            statusEl.textContent = "Uploading and processing entry…";
-
-            const formData = new FormData();
-            formData.append("file", blob, "entry.webm");
-
-            try {
-              const resp = await fetch("http://localhost:8000/entries", {
-                method: "POST",
-                body: formData,
-              });
-
-              if (!resp.ok) {
-                const text = await resp.text();
-                log(`❌ Server error: ${resp.status} – ${text}`);
-                statusEl.textContent = "Error uploading entry.";
-                return;
-              }
-
-              const data = await resp.json();
-              log("✅ Entry stored. ID: " + data.entry_id);
-              if (data.analysis) {
-                log("Summary: " + (data.analysis.summary || "[none]"));
-                if (data.analysis.themes) {
-                  log("Themes: " + JSON.stringify(data.analysis.themes));
-                }
-                if (data.analysis.emotions) {
-                  log("Emotions: " + JSON.stringify(data.analysis.emotions));
-                }
-              }
-
-              statusEl.textContent = "Entry saved successfully.";
-              insightsLoadedOnce = false; // refresh insights next time tab opens
-            } catch (err) {
-              console.error(err);
-              log("❌ Failed to upload entry: " + err.message);
-              statusEl.textContent = "Upload failed.";
-            }
-          };
-
-          mediaRecorder.start();
-          statusEl.textContent = "Recording… tell your story.";
-          log("🎙 Recording started.");
-
-          startBtn.disabled = true;
-          stopBtn.disabled = false;
-        } catch (err) {
-          console.error(err);
-          log("❌ Could not start recording: " + err.message);
-          statusEl.textContent = "Microphone access failed.";
-        }
+        mediaRecorder.start();
+        statusEl.textContent = "Recording… tell your story.";
+        log("🎙 Recording started.");
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      } catch (err) {
+        console.error(err);
+        log("❌ Could not start recording: " + err.message);
+        statusEl.textContent = "Microphone access failed.";
       }
+    }
 
-      function stopRecording() {
-        if (mediaRecorder && mediaRecorder.state === "recording") {
-          mediaRecorder.stop();
-          startBtn.disabled = false;
-          stopBtn.disabled = true;
-        }
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
       }
+    }
+    startBtn.addEventListener("click", startRecording);
+    stopBtn.addEventListener("click", stopRecording);
 
-      startBtn.addEventListener("click", startRecording);
-      stopBtn.addEventListener("click", stopRecording);
-
-      // --- Tabs ---
-      const tabButtons = document.querySelectorAll(".tab-btn");
-      const tabContents = document.querySelectorAll(".tab-content");
-
-      function setActiveTab(tabName) {
-        tabButtons.forEach((btn) => {
-          btn.classList.toggle("active", btn.dataset.tab === tabName);
-        });
-        tabContents.forEach((section) => {
-          section.classList.toggle("active", section.id === tabName);
-        });
-
-        if (tabName === "insights") {
-          loadInsights();
-        }
+    // --- Data fetching ---
+    async function loadEntries() {
+      if (entriesCache.length) {
+        renderRecent(entriesCache);
+        renderTimeline(entriesCache);
+        return;
       }
+      try {
+        const resp = await fetch("http://localhost:8000/insights/entries");
+        if (!resp.ok) throw new Error(`Server responded with ${resp.status}`);
+        entriesCache = await resp.json();
+        renderRecent(entriesCache);
+        renderTimeline(entriesCache);
+      } catch (err) {
+        recentEntriesEl.textContent = `Failed to load entries: ${err.message}`;
+        timelineStatus.textContent = `Failed to load entries: ${err.message}`;
+      }
+    }
 
-      tabButtons.forEach((btn) => {
-        btn.addEventListener("click", () => setActiveTab(btn.dataset.tab));
+    async function loadSummary() {
+      if (summaryCache) {
+        renderSummary(summaryCache);
+        return;
+      }
+      summaryText.textContent = "Loading stats…";
+      entriesChart.innerHTML = "";
+      try {
+        const resp = await fetch("http://localhost:8000/insights/summary");
+        if (!resp.ok) throw new Error(`Server responded with ${resp.status}`);
+        summaryCache = await resp.json();
+        renderSummary(summaryCache);
+      } catch (err) {
+        summaryText.textContent = `Failed to load stats: ${err.message}`;
+      }
+    }
+
+    // --- Recent entries (Capture tab) ---
+    function renderRecent(entries) {
+      if (!entries || !entries.length) {
+        recentEntriesEl.textContent = "No entries yet.";
+        return;
+      }
+      const topThree = entries.slice(0, 3);
+      recentEntriesEl.innerHTML = topThree.map((e) => {
+        const date = new Date(e.created_at).toLocaleString();
+        return `<div class="entry-card"><div class="entry-header"><div>${date}</div></div><div class="entry-body">${e.summary || e.preview || "—"}</div></div>`;
+      }).join("");
+    }
+
+    // --- Timeline ---
+    filter7.addEventListener("click", () => renderTimeline(entriesCache, 7));
+    filter30.addEventListener("click", () => renderTimeline(entriesCache, 30));
+    filterAll.addEventListener("click", () => renderTimeline(entriesCache, "all"));
+
+    function renderTimeline(entries, range = "all") {
+      timelineList.innerHTML = "";
+      if (!entries || !entries.length) {
+        timelineStatus.textContent = "No entries yet.";
+        return;
+      }
+      timelineStatus.textContent = "";
+      const now = Date.now();
+      const filtered = entries.filter((e) => {
+        if (range === "all") return true;
+        const days = parseInt(range, 10);
+        const diff = (now - new Date(e.created_at).getTime()) / (1000 * 60 * 60 * 24);
+        return diff <= days;
       });
 
-      // --- Insights tab logic ---
-      async function loadInsights() {
-        if (insightsLoadedOnce) {
-          return;
-        }
-        insightsLoadedOnce = true;
-        await Promise.all([fetchEntries(), fetchSummary()]);
+      if (!filtered.length) {
+        timelineStatus.textContent = "No entries in this range.";
+        return;
       }
 
-      async function fetchEntries() {
-        entriesStatus.textContent = "Loading entries…";
-        entriesBody.innerHTML = "";
-        try {
-          const resp = await fetch("http://localhost:8000/insights/entries");
-          if (!resp.ok) {
-            throw new Error(`Server responded with ${resp.status}`);
-          }
-          const data = await resp.json();
-          renderEntries(data);
-        } catch (err) {
-          entriesStatus.textContent = `Failed to load entries: ${err.message}`;
-        }
-      }
+      filtered.forEach((entry, idx) => {
+        const card = document.createElement("div");
+        card.className = "entry-card";
+        const dateStr = new Date(entry.created_at).toLocaleString();
+        const sentimentClass = entry.sentiment_label ? entry.sentiment_label.toLowerCase() : "neutral";
+        const sentimentBadge = entry.sentiment_label
+          ? `<span class="badge ${sentimentClass}">${entry.sentiment_label}${entry.sentiment_score ? ` (${Math.round(entry.sentiment_score * 100)}%)` : ""}</span>`
+          : "";
 
-      function renderEntries(entries) {
-        entriesBody.innerHTML = "";
-        if (!entries || entries.length === 0) {
-          entriesStatus.textContent = "No entries yet.";
-          return;
-        }
-        entriesStatus.textContent = "";
-
-        entries.forEach((entry) => {
-          const tr = document.createElement("tr");
-
-          const dateTd = document.createElement("td");
-          dateTd.textContent = new Date(entry.created_at).toLocaleString();
-
-          const summaryTd = document.createElement("td");
-          summaryTd.innerHTML = `<div>${entry.summary || entry.preview || "—"}</div>`;
-
-          const emotionsTd = document.createElement("td");
-          emotionsTd.appendChild(renderEmotions(entry));
-
-          const topicsTd = document.createElement("td");
-          topicsTd.appendChild(renderChips(entry.topics, "muted", "No topics"));
-
-          const entitiesTd = document.createElement("td");
-          const people = renderChips(entry.people, "", "No people");
-          const places = renderChips(entry.places, "muted", "No places");
-          entitiesTd.appendChild(people);
-          entitiesTd.appendChild(places);
-
-          const wordsTd = document.createElement("td");
-          wordsTd.textContent = entry.word_count ?? "-";
-
-          tr.appendChild(dateTd);
-          tr.appendChild(summaryTd);
-          tr.appendChild(emotionsTd);
-          tr.appendChild(topicsTd);
-          tr.appendChild(entitiesTd);
-          tr.appendChild(wordsTd);
-          entriesBody.appendChild(tr);
-        });
-      }
-
-      async function fetchSummary() {
-        summaryText.textContent = "Loading stats…";
-        entriesChart.innerHTML = "";
-        try {
-          const resp = await fetch("http://localhost:8000/insights/summary");
-          if (!resp.ok) {
-            throw new Error(`Server responded with ${resp.status}`);
-          }
-          const data = await resp.json();
-          renderSummary(data);
-        } catch (err) {
-          summaryText.textContent = `Failed to load stats: ${err.message}`;
-        }
-      }
-
-      function renderSummary(data) {
-        if (!data) {
-          summaryText.textContent = "No data available.";
-          return;
-        }
-
-        const { total_entries, total_words, average_word_count, entries_per_day, top_emotions, top_topics, top_people, top_places } = data;
-        summaryText.textContent = `You've created ${total_entries} entries with ${total_words} total words (avg ${average_word_count.toFixed(1)} words/entry).`;
-
-        const metaWrap = document.createElement("div");
-        metaWrap.style.marginTop = "8px";
-        metaWrap.appendChild(makeMetaRow("Top emotions", top_emotions));
-        metaWrap.appendChild(makeMetaRow("Top topics", top_topics));
-        metaWrap.appendChild(makeMetaRow("People", top_people));
-        metaWrap.appendChild(makeMetaRow("Places", top_places));
-
-        entriesChart.innerHTML = "";
-        entriesChart.appendChild(metaWrap);
-        if (!entries_per_day || entries_per_day.length === 0) {
-          const empty = document.createElement("div");
-          empty.className = "muted";
-          empty.textContent = "No entries per-day data yet.";
-          entriesChart.appendChild(empty);
-          return;
-        }
-
-        const maxCount = Math.max(...entries_per_day.map((d) => d.count));
-
-        entries_per_day.forEach((item) => {
-          const row = document.createElement("div");
-          row.className = "bar-row";
-
-          const label = document.createElement("div");
-          label.className = "bar-label";
-          label.textContent = item.date;
-
-          const track = document.createElement("div");
-          track.className = "bar-track";
-
-          const fill = document.createElement("div");
-          fill.className = "bar-fill";
-          const percentage = maxCount ? (item.count / maxCount) * 100 : 0;
-          fill.style.width = `${Math.max(8, percentage)}%`;
-          track.appendChild(fill);
-
-          const count = document.createElement("div");
-          count.className = "bar-label";
-          count.style.width = "40px";
-          count.textContent = item.count;
-
-          row.appendChild(label);
-          row.appendChild(track);
-          row.appendChild(count);
-          entriesChart.appendChild(row);
-        });
-      }
-
-      function renderEmotions(entry) {
-        const container = document.createElement("div");
-        const scores = entry.emotion_scores || {};
-        const names = Object.keys(scores);
-
-        if (names.length === 0 && (!entry.emotions || entry.emotions.length === 0)) {
-          container.textContent = "—";
-          container.className = "muted";
-          return container;
-        }
-
-        const sorted = names
-          .map((name) => ({ name, score: scores[name] }))
-          .sort((a, b) => (b.score || 0) - (a.score || 0))
-          .slice(0, 3);
-
-        sorted.forEach(({ name, score }) => {
-          const badge = document.createElement("span");
-          badge.className = "badge";
-          badge.innerHTML = `<span>${name}</span><span class="score">${Math.round(score * 100)}%</span>`;
-          container.appendChild(badge);
-        });
-
-        if (sorted.length === 0 && entry.emotions) {
-          entry.emotions.slice(0, 3).forEach((name) => {
-            const badge = document.createElement("span");
-            badge.className = "chip";
-            badge.textContent = name;
-            container.appendChild(badge);
-          });
-        }
-        return container;
-      }
-
-      function renderChips(items, extraClass = "", emptyText = "") {
-        const wrap = document.createElement("div");
-        if (!items || items.length === 0) {
-          if (emptyText) {
-            const chip = document.createElement("span");
-            chip.className = `chip ${extraClass} muted`.trim();
-            chip.textContent = emptyText;
-            wrap.appendChild(chip);
-          }
-          return wrap;
-        }
-        items.forEach((item) => {
-          const chip = document.createElement("span");
-          chip.className = `chip ${extraClass}`.trim();
-          chip.textContent = item;
-          wrap.appendChild(chip);
-        });
-        return wrap;
-      }
-
-      function makeMetaRow(labelText, items) {
-        const row = document.createElement("div");
-        row.style.marginBottom = "6px";
-        row.style.display = "flex";
-        row.style.alignItems = "center";
-        row.style.gap = "10px";
-
-        const label = document.createElement("div");
-        label.className = "muted";
-        label.textContent = `${labelText}:`;
-
-        const content = document.createElement("div");
-        content.appendChild(renderChips(items, "", "—"));
-
-        row.appendChild(label);
-        row.appendChild(content);
-        return row;
-      }
-
-      function renderUsedEntries(entries) {
-        usedEntries.innerHTML = "";
-        usedEntries.classList.remove("hidden");
-        entries.forEach((entry) => {
-          const div = document.createElement("div");
-          div.className = "used-entry";
-          const dateStr = new Date(entry.created_at).toLocaleString();
-          div.innerHTML = `<time>${dateStr}</time><div>${entry.preview || ""}</div>`;
-          usedEntries.appendChild(div);
-        });
-      }
-
-      async function sendConversationMessage() {
-        const text = chatInput.value.trim();
-        if (!text) {
-          chatStatus.textContent = "Please enter a message.";
-          return;
-        }
-        chatStatus.textContent = "Thinking…";
-        chatSendBtn.disabled = true;
-
-        // Push user message locally
-        conversationHistory.push({ role: "user", content: text });
-        renderConversation();
-        chatInput.value = "";
-
-        try {
-          const resp = await fetch("http://localhost:8000/conversation/respond", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              messages: conversationHistory.map(({ role, content }) => ({ role, content })),
-            }),
-          });
-
-          if (!resp.ok) {
-            const errText = await resp.text();
-            throw new Error(errText || `Server responded with ${resp.status}`);
-          }
-
-          const data = await resp.json();
-          conversationHistory.push({
-            role: "assistant",
-            content: data.response || "No response.",
-            used_entry_ids: data.used_entry_ids || [],
-          });
-          renderConversation();
-          chatStatus.textContent = data.used_entry_ids?.length
-            ? `Based on ${data.used_entry_ids.length} past entr${data.used_entry_ids.length === 1 ? "y" : "ies"}.`
-            : "";
-        } catch (err) {
-          chatStatus.textContent = `Error: ${err.message}`;
-        } finally {
-          chatSendBtn.disabled = false;
-        }
-      }
-
-      function renderConversation() {
-        chatPane.innerHTML = "";
-        conversationHistory.forEach((turn) => {
-          const bubble = document.createElement("div");
-          bubble.className = `bubble ${turn.role}`;
-          bubble.textContent = turn.content;
-          chatPane.appendChild(bubble);
-
-          if (turn.role === "assistant" && turn.used_entry_ids && turn.used_entry_ids.length) {
-            const meta = document.createElement("div");
-            meta.className = "bubble-meta";
-            meta.textContent = `Referenced entries: ${turn.used_entry_ids.join(", ")}`;
-            chatPane.appendChild(meta);
-          }
-        });
-        chatPane.scrollTop = chatPane.scrollHeight;
-      }
-
-      async function generateRecap(type) {
-        recapStatus.textContent = "Generating...";
-        recapResult.classList.add("hidden");
-        recapResult.innerHTML = "";
-        weeklyBtn.disabled = true;
-        monthlyBtn.disabled = true;
-        lastRecapType = type;
-        try {
-          const resp = await fetch(`http://localhost:8000/insights/${type}`);
-          if (!resp.ok) {
-            const text = await resp.text();
-            throw new Error(text || `Server responded with ${resp.status}`);
-          }
-          const data = await resp.json();
-          renderRecap(data);
-          recapStatus.textContent = "";
-        } catch (err) {
-          recapStatus.textContent = `Error: ${err.message}`;
-        } finally {
-          weeklyBtn.disabled = false;
-          monthlyBtn.disabled = false;
-        }
-      }
-
-      function renderRecap(data) {
-        recapResult.classList.remove("hidden");
-        const moodList = (data.mood_trajectory || [])
-          .map((m) => `${m.date}: ${m.top_emotion || "—"} (${m.score ?? "-"})`)
-          .join("<br>");
-
-        recapResult.innerHTML = `
-          <div class="recap-meta">Entries: ${data.total_entries} • Words: ${data.total_words}</div>
-          <div><strong>Summary:</strong> ${data.summary || "—"}</div>
-          <div style="margin-top:8px;"><strong>Themes:</strong> ${(data.themes || []).join(", ") || "—"}</div>
-          <div style="margin-top:8px;"><strong>Highlights:</strong><br>${(data.highlights || []).map(h => `• ${h}`).join("<br>") || "—"}</div>
-          <div style="margin-top:8px;"><strong>Top emotions:</strong> ${(data.top_emotions || []).join(", ") || "—"}</div>
-          <div style="margin-top:8px;"><strong>Top topics:</strong> ${(data.top_topics || []).join(", ") || "—"}</div>
-          <div style="margin-top:8px;"><strong>Mood trajectory:</strong><br>${moodList || "—"}</div>
+        card.innerHTML = `
+          <div class="entry-header">
+            <div><strong>${dateStr}</strong></div>
+            <div>${sentimentBadge}</div>
+          </div>
+          <div class="entry-body">
+            <div>${entry.summary || entry.preview || "—"}</div>
+            <div style="margin-top:6px;">${(entry.topics || []).map((t) => `<span class="pill">${t}</span>`).join("") || '<span class="muted">No topics</span>'}</div>
+            <div class="expand" data-idx="${idx}">Toggle details</div>
+            <div class="entry-meta hidden" id="meta-${idx}">
+              <div><strong>Full text:</strong> ${entry.preview || "—"}</div>
+              <div><strong>People/Places:</strong> ${(entry.people || []).join(", ") || "—"} / ${(entry.places || []).join(", ") || "—"}</div>
+              <div><strong>Word count:</strong> ${entry.word_count ?? "-"}</div>
+            </div>
+          </div>
         `;
+        card.querySelector(".expand").addEventListener("click", () => {
+          const meta = document.getElementById(`meta-${idx}`);
+          meta.classList.toggle("hidden");
+        });
+        timelineList.appendChild(card);
+      });
+    }
+
+    // --- Insights summary & chart ---
+    function renderSummary(data) {
+      if (!data) {
+        summaryText.textContent = "No data available.";
+        return;
       }
+      const { total_entries, total_words, average_word_count, entries_per_day } = data;
+      summaryText.textContent = `You have ${total_entries} entries and ${total_words} words (avg ${average_word_count.toFixed(1)} words/entry).`;
 
-      async function generateWeeklyQuick() {
-        weeklyQuickStatus.textContent = "Generating...";
-        weeklyQuickResult.classList.add("hidden");
-        weeklyQuickResult.innerHTML = "";
-        weeklyQuickBtn.disabled = true;
-        try {
-          const resp = await fetch("http://localhost:8000/insights/weekly");
-          if (!resp.ok) {
-            const text = await resp.text();
-            throw new Error(text || `Server responded with ${resp.status}`);
-          }
-          const data = await resp.json();
-          weeklyQuickResult.classList.remove("hidden");
-          weeklyQuickResult.innerHTML = `
-            <div class="recap-meta">Entries: ${data.total_entries} • Avg sentiment: ${data.average_sentiment ?? "—"}</div>
-            <div><strong>Summary:</strong> ${data.summary || "—"}</div>
-            <div style="margin-top:8px;"><strong>Top topics:</strong> ${(data.top_topics || []).join(", ") || "—"}</div>
-          `;
-          weeklyQuickStatus.textContent = "";
-        } catch (err) {
-          weeklyQuickStatus.textContent = `Error: ${err.message}`;
-        } finally {
-          weeklyQuickBtn.disabled = false;
-        }
+      entriesChart.innerHTML = "";
+      if (!entries_per_day || !entries_per_day.length) {
+        entriesChart.textContent = "No entries per-day data yet.";
+        return;
       }
+      const maxCount = Math.max(...entries_per_day.map((d) => d.count));
+      entries_per_day.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "bar-row";
+        const label = document.createElement("div");
+        label.className = "bar-label";
+        label.textContent = item.date;
+        const track = document.createElement("div");
+        track.className = "bar-track";
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        fill.style.width = `${Math.max(8, (item.count / maxCount) * 100)}%`;
+        track.appendChild(fill);
+        const count = document.createElement("div");
+        count.className = "bar-label";
+        count.style.width = "40px";
+        count.textContent = item.count;
+        row.append(label, track, count);
+        entriesChart.appendChild(row);
+      });
+    }
 
-      async function askQuestion() {
-        const question = questionInput.value.trim();
-        if (!question) {
-          askStatus.textContent = "Please enter a question.";
-          return;
-        }
-
-        askStatus.textContent = "Thinking…";
-        askBtn.disabled = true;
-        answerBox.classList.add("hidden");
-        answerMeta.classList.add("hidden");
-        usedEntries.classList.add("hidden");
-        usedEntries.innerHTML = "";
-
-        try {
-          const resp = await fetch("http://localhost:8000/insights/query", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ question }),
-          });
-
-          if (!resp.ok) {
-            const text = await resp.text();
-            throw new Error(text || `Server responded with ${resp.status}`);
-          }
-
-          const data = await resp.json();
-          answerBox.textContent = data.answer || "No answer returned.";
-          answerBox.classList.remove("hidden");
-          const usedCount = data.used_entry_ids ? data.used_entry_ids.length : 0;
-          askStatus.textContent = "";
-          answerMeta.textContent = usedCount
-            ? `This answer is based on ${usedCount} past entr${usedCount === 1 ? "y" : "ies"}.`
-            : "";
-          if (usedCount) {
-            answerMeta.classList.remove("hidden");
-          }
-          if (data.used_entries && data.used_entries.length) {
-            renderUsedEntries(data.used_entries);
-          }
-        } catch (err) {
-          askStatus.textContent = `Error: ${err.message}`;
-        } finally {
-          askBtn.disabled = false;
-        }
+    // --- Weekly recap (simple card) ---
+    async function generateWeeklyQuick() {
+      weeklyQuickStatus.textContent = "Generating...";
+      weeklyQuickResult.classList.add("hidden");
+      weeklyQuickResult.innerHTML = "";
+      weeklyQuickBtn.disabled = true;
+      try {
+        const resp = await fetch("http://localhost:8000/insights/weekly");
+        if (!resp.ok) throw new Error(await resp.text());
+        const data = await resp.json();
+        weeklyQuickResult.classList.remove("hidden");
+        weeklyQuickResult.innerHTML = `
+          <div class="muted">Entries: ${data.total_entries} • Avg sentiment: ${data.average_sentiment ?? "—"}</div>
+          <div><strong>Summary:</strong> ${data.summary || "—"}</div>
+          <div style="margin-top:6px;"><strong>Top topics:</strong> ${(data.top_topics || []).join(", ") || "—"}</div>
+        `;
+        weeklyQuickStatus.textContent = "";
+      } catch (err) {
+        weeklyQuickStatus.textContent = `Error: ${err.message}`;
+      } finally {
+        weeklyQuickBtn.disabled = false;
       }
+    }
+    weeklyQuickBtn.addEventListener("click", generateWeeklyQuick);
 
-      askBtn.addEventListener("click", askQuestion);
-      chatSendBtn.addEventListener("click", sendConversationMessage);
-      weeklyQuickBtn.addEventListener("click", generateWeeklyQuick);
-      weeklyBtn.addEventListener("click", () => generateRecap("weekly"));
-      monthlyBtn.addEventListener("click", () => generateRecap("monthly"));
+    // --- Chat ---
+    async function sendConversationMessage() {
+      const text = chatInput.value.trim();
+      if (!text) {
+        chatStatus.textContent = "Please enter a message.";
+        return;
+      }
+      chatStatus.textContent = "Thinking…";
+      chatSendBtn.disabled = true;
 
-      // Initial state
-      setActiveTab("capture");
-    </script>
-  </body>
+      conversationHistory.push({ role: "user", content: text });
+      renderConversation();
+      chatInput.value = "";
+
+      try {
+        const resp = await fetch("http://localhost:8000/conversation/respond", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: conversationHistory }),
+        });
+        if (!resp.ok) throw new Error(await resp.text());
+        const data = await resp.json();
+        conversationHistory.push({
+          role: "assistant",
+          content: data.response || "No response.",
+          used_entry_ids: data.used_entry_ids || [],
+        });
+        renderConversation();
+        chatStatus.textContent = data.used_entry_ids?.length
+          ? `Based on ${data.used_entry_ids.length} entr${data.used_entry_ids.length === 1 ? "y" : "ies"}.`
+          : "";
+      } catch (err) {
+        chatStatus.textContent = `Error: ${err.message}`;
+      } finally {
+        chatSendBtn.disabled = false;
+      }
+    }
+    chatSendBtn.addEventListener("click", sendConversationMessage);
+
+    function renderConversation() {
+      chatPane.innerHTML = "";
+      conversationHistory.forEach((turn) => {
+        const bubble = document.createElement("div");
+        bubble.className = `bubble ${turn.role}`;
+        bubble.textContent = turn.content;
+        chatPane.appendChild(bubble);
+        if (turn.role === "assistant" && turn.used_entry_ids && turn.used_entry_ids.length) {
+          const meta = document.createElement("div");
+          meta.className = "bubble-meta";
+          meta.textContent = `Based on ${turn.used_entry_ids.length} entr${turn.used_entry_ids.length === 1 ? "y" : "ies"}.`;
+          chatPane.appendChild(meta);
+        }
+      });
+      chatPane.scrollTop = chatPane.scrollHeight;
+    }
+
+    // Initial load
+    setActiveTab("capture");
+  </script>
+</body>
 </html>
