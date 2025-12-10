@@ -78,6 +78,7 @@ async def process_entry(text: Optional[str], file: Optional[UploadFile]):
     memory_chunks_str = json.dumps(memory_chunks) if memory_chunks else None
 
     # Create embedding for semantic search
+    # If embedding model changes, re-embed historical entries via a script/migration.
     embedding_vec = embed_text(text)
     embedding_str = serialize_embedding(embedding_vec)
 

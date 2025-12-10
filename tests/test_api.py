@@ -57,7 +57,11 @@ def client(monkeypatch, tmp_path):
     monkeypatch.setattr(entry_service, "analyze_text", fake_analysis)
     monkeypatch.setattr(entry_service, "embed_text", lambda text: [0.1, 0.2, 0.3])
     monkeypatch.setattr(entry_service, "serialize_embedding", lambda vec: json.dumps(vec))
-    monkeypatch.setattr(insights_router, "embed_text", lambda text: [0.1, 0.2, 0.3])
+    def fake_find_similar_entries(question, entries, top_k=5):
+        # return existing entries with a constant score for determinism
+        return [(1.0, e) for e in list(entries)[:top_k]]
+
+    monkeypatch.setattr(insights_router, "find_similar_entries", fake_find_similar_entries)
 
     class DummyChoice:
         def __init__(self, content: str):

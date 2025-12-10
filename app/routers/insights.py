@@ -10,10 +10,7 @@ from sqlmodel import Session, select
 from app.db.database import get_session
 from app.models.entry import Entry
 from app.services.openai_service import client
-from app.services.embedding_service import (
-    embed_text,
-    deserialize_embedding,
-)
+from app.services.embedding_service import find_similar_entries
 
 router = APIRouter(prefix="/insights", tags=["insights"])
 
@@ -295,39 +292,11 @@ def _fetch_similar_entries(
     Embed the question and retrieve top-k entries by cosine similarity.
     Falls back to recent entries if embeddings are missing.
     """
-    question_vec = embed_text(question)
-    if not question_vec:
-        return session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(top_k)).all()
-
-    entries = session.exec(select(Entry)).all()
-
-    scored: List[Tuple[float, Entry]] = []
-    for entry in entries:
-        vec = deserialize_embedding(entry.embedding)
-        if not vec:
-            continue
-        sim = _cosine_similarity(question_vec, vec)
-        if sim is not None:
-            scored.append((sim, entry))
-
-    if not scored:
-        return session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(top_k)).all()
-
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [entry for _, entry in scored[:top_k]]
-
-
-def _cosine_similarity(a: List[float], b: List[float]) -> Optional[float]:
-    if not a or not b or len(a) != len(b):
-        return None
-    import math
-
-    dot = sum(x * y for x, y in zip(a, b))
-    norm_a = math.sqrt(sum(x * x for x in a))
-    norm_b = math.sqrt(sum(y * y for y in b))
-    if norm_a == 0 or norm_b == 0:
-        return None
-    return dot / (norm_a * norm_b)
+    all_entries = session.exec(select(Entry)).all()
+    scored = find_similar_entries(question, all_entries, top_k=top_k)
+    if scored:
+        return [entry for _, entry in scored]
+    return session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(top_k)).all()
 
 
 def _build_recap(period: str, days: int, session: Session) -> RecapResponse:
