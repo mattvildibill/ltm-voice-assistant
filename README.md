@@ -10,7 +10,7 @@ A lightweight life-story memory tool: record short voice notes, transcribe them 
 - SQLite persistence via SQLModel (`ltm.db` by default).
 - Simple frontend (`frontend/index.html`) with two tabs:
   - **Capture**: record audio and send it to the API.
-  - **Insights & Q&A**: browse stored entries with metadata (emotions, topics, entities, word counts), view stats, ask grounded questions, and hold a conversation with your memories.
+  - **Insights & Q&A**: browse stored entries with metadata (emotions, topics, entities, word counts), view stats, ask grounded questions, hold a conversation with your memories, and generate weekly/monthly recaps.
 - Daily prompt helper at `GET /prompt/daily`.
  
 ### Insights endpoints (new)
@@ -20,11 +20,14 @@ A lightweight life-story memory tool: record short voice notes, transcribe them 
 
 ## Project Structure
 - `main.py` – FastAPI app, mounts routers and serves the static frontend.
-- `app/routers/` – API routes (`entries`, `health`, `prompts`, `insights`).
+- `app/routers/` – API routes (`entries`, `health`, `prompts`, `insights`, `conversation`).
 - `app/services/` – Transcription, OpenAI analysis, and entry handling.
 - `app/db/` – Database setup and session helper.
 - `app/models/` – SQLModel entry definition.
 - `frontend/` – Vanilla HTML/JS UI for recording and sending entries.
+- `app/core/config.py` – Pydantic settings for env vars.
+- `app/core/error_handlers.py` – Global exception handling.
+- `migrations/` – Alembic migrations.
 
 ## Prerequisites
 - Python 3.12+
@@ -36,6 +39,8 @@ cd /home/mattv/Projects/ltm-lifestory
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install fastapi uvicorn[standard] sqlmodel python-dotenv openai
+# Additional tooling (migrations/tests):
+pip install alembic pytest pydantic-settings
 ```
 
 Create a `.env` file:
@@ -75,3 +80,16 @@ API base: `http://127.0.0.1:8000`
 - The backend uses OpenAI; make sure the `.env` file is loaded before running.
 - `ltm.db` is ignored by git; delete it if you want a fresh database.
 - Update CORS or host settings in `main.py` if you deploy beyond local dev.
+
+## Configuration
+- Managed via Pydantic settings in `app/core/config.py` (loads `.env`).
+- Key env vars: `OPENAI_API_KEY`, `DATABASE_URL` (defaults to `sqlite:///./ltm.db`), `ENVIRONMENT`.
+
+## Database migrations
+- Alembic is configured (`alembic.ini`, `migrations/`).
+- Create a new revision: `alembic revision --autogenerate -m "message"`.
+- Apply migrations: `alembic upgrade head`.
+
+## Tests
+- Basic pytest suite exercises entry creation, insights summary, and Q&A (`tests/test_api.py`).
+- Run with: `pytest`

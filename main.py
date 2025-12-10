@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.core.error_handlers import add_exception_handlers
 from app.routers.entries import router as entries_router
 from app.routers.health import router as health_router
 from app.routers.prompts import router as prompts_router
@@ -20,6 +21,8 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 # Ensure tables and new metadata columns exist
 init_db()
 migrate_db()
+
+add_exception_handlers(app)
 
 # ⭐ ABSOLUTE REQUIRED CORS ⭐
 app.add_middleware(

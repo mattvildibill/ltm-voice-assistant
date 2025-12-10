@@ -1,10 +1,6 @@
 import json
 import json
-from dotenv import load_dotenv
-from openai import OpenAI
-
-load_dotenv()
-client = OpenAI()  # automatically reads OPENAI_API_KEY from env
+from app.services.openai_service import client
 
 
 def analyze_text(text: str):

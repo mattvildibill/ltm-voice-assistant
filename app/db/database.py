@@ -1,13 +1,10 @@
-import os
 from typing import Iterable, Tuple
 
 from sqlmodel import SQLModel, create_engine, Session
-
-# Location of your SQLite DB file
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./ltm.db")
+from app.core.config import settings
 
 # Create the engine
-engine = create_engine(DATABASE_URL, echo=False)
+engine = create_engine(settings.database_url, echo=False)
 
 
 def init_db() -> None:

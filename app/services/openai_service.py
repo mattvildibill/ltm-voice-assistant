@@ -1,11 +1,13 @@
-import os
-from dotenv import load_dotenv
 from openai import OpenAI
+from app.core.config import settings
 
-# Load .env variables
-load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def get_openai_client() -> OpenAI:
+    """Return a shared OpenAI client configured from settings."""
+    return OpenAI(api_key=settings.openai_api_key)
+
+
+client = get_openai_client()
 
 def generate_daily_prompt():
     prompt = """

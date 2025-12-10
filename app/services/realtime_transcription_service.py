@@ -1,10 +1,5 @@
-import os
 import tempfile
-from openai import OpenAI
-from dotenv import load_dotenv
-
-load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+from app.services.openai_service import client
 
 
 async def transcribe_realtime(file):
