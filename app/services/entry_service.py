@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from app.services.analysis_service import analyze_text
 from app.services.realtime_transcription_service import transcribe_realtime
+from app.services.embedding_service import embed_text, serialize_embedding
 from app.db.database import get_session
 from app.models.entry import Entry
 
@@ -67,6 +68,10 @@ async def process_entry(text: Optional[str], file: Optional[UploadFile]):
     places_str = ", ".join(places) if isinstance(places, list) else None
     memory_chunks_str = json.dumps(memory_chunks) if memory_chunks else None
 
+    # Create embedding for semantic search
+    embedding_vec = embed_text(text)
+    embedding_str = serialize_embedding(embedding_vec)
+
     # Store in database
     with get_session() as session:
         entry = Entry(
@@ -81,6 +86,7 @@ async def process_entry(text: Optional[str], file: Optional[UploadFile]):
             places=places_str,
             memory_chunks=memory_chunks_str,
             word_count=word_count,
+            embedding=embedding_str,
         )
         session.add(entry)
         session.commit()

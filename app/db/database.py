@@ -45,6 +45,7 @@ def migrate_db() -> None:
             ("people", "TEXT"),
             ("places", "TEXT"),
             ("word_count", "INTEGER"),
+            ("embedding", "TEXT"),
         ],
     )
 

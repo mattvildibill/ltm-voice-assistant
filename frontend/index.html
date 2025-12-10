@@ -203,6 +203,20 @@
       .hidden {
         display: none;
       }
+      .used-entries {
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px dashed #2b3a55;
+        border-radius: 8px;
+        background: #0f141f;
+      }
+      .used-entry {
+        margin-bottom: 8px;
+      }
+      .used-entry time {
+        color: var(--muted);
+        font-size: 12px;
+      }
     </style>
   </head>
 
@@ -265,6 +279,8 @@
         <button id="askBtn" class="primary">Ask</button>
         <div class="muted" id="askStatus"></div>
         <div id="answerBox" class="answer-box hidden"></div>
+        <div id="answerMeta" class="muted hidden"></div>
+        <div id="usedEntries" class="used-entries hidden"></div>
       </div>
     </section>
 
@@ -282,6 +298,8 @@
       const askBtn = document.getElementById("askBtn");
       const askStatus = document.getElementById("askStatus");
       const answerBox = document.getElementById("answerBox");
+      const answerMeta = document.getElementById("answerMeta");
+      const usedEntries = document.getElementById("usedEntries");
 
       let mediaRecorder = null;
       let chunks = [];
@@ -605,6 +623,18 @@
         return row;
       }
 
+      function renderUsedEntries(entries) {
+        usedEntries.innerHTML = "";
+        usedEntries.classList.remove("hidden");
+        entries.forEach((entry) => {
+          const div = document.createElement("div");
+          div.className = "used-entry";
+          const dateStr = new Date(entry.created_at).toLocaleString();
+          div.innerHTML = `<time>${dateStr}</time><div>${entry.preview || ""}</div>`;
+          usedEntries.appendChild(div);
+        });
+      }
+
       async function askQuestion() {
         const question = questionInput.value.trim();
         if (!question) {
@@ -615,6 +645,9 @@
         askStatus.textContent = "Thinking…";
         askBtn.disabled = true;
         answerBox.classList.add("hidden");
+        answerMeta.classList.add("hidden");
+        usedEntries.classList.add("hidden");
+        usedEntries.innerHTML = "";
 
         try {
           const resp = await fetch("http://localhost:8000/insights/query", {
@@ -633,9 +666,17 @@
           const data = await resp.json();
           answerBox.textContent = data.answer || "No answer returned.";
           answerBox.classList.remove("hidden");
-          askStatus.textContent = data.used_entry_ids
-            ? `Used entries: ${data.used_entry_ids.join(", ")}`
+          const usedCount = data.used_entry_ids ? data.used_entry_ids.length : 0;
+          askStatus.textContent = "";
+          answerMeta.textContent = usedCount
+            ? `This answer is based on ${usedCount} past entr${usedCount === 1 ? "y" : "ies"}.`
             : "";
+          if (usedCount) {
+            answerMeta.classList.remove("hidden");
+          }
+          if (data.used_entries && data.used_entries.length) {
+            renderUsedEntries(data.used_entries);
+          }
         } catch (err) {
           askStatus.textContent = `Error: ${err.message}`;
         } finally {

@@ -6,6 +6,7 @@ A lightweight life-story memory tool: record short voice notes, transcribe them 
 - FastAPI backend with CORS enabled for local dev.
 - Endpoint `POST /entries` accepts audio (`multipart/form-data`) or raw text; audio is transcribed with `gpt-4o-transcribe`.
 - Entry analysis via OpenAI (summary, themes, emotions + scores, topics, people/places, memory chunks, word count) using `gpt-4o-mini`.
+- Embedding-based retrieval for Q&A using `text-embedding-3-small` to ground answers in the most relevant past entries.
 - SQLite persistence via SQLModel (`ltm.db` by default).
 - Simple frontend (`frontend/index.html`) with two tabs:
   - **Capture**: record audio and send it to the API.

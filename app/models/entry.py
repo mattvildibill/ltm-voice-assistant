@@ -22,5 +22,6 @@ class Entry(SQLModel, table=True):
     people: Optional[str] = None  # comma-delimited people
     places: Optional[str] = None  # comma-delimited places
     word_count: Optional[int] = None
+    embedding: Optional[str] = None  # JSON array of floats
 
     created_at: datetime = Field(default_factory=datetime.utcnow)

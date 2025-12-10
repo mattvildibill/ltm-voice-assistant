@@ -1,15 +1,19 @@
 import json
 from collections import Counter
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
 from app.db.database import get_session
 from app.models.entry import Entry
 from app.services.openai_service import client
+from app.services.embedding_service import (
+    embed_text,
+    deserialize_embedding,
+)
 
 router = APIRouter(prefix="/insights", tags=["insights"])
 
@@ -25,11 +29,11 @@ class EntryPreview(BaseModel):
     created_at: datetime
     preview: str
     summary: Optional[str] = None
-    topics: List[str] = []
-    emotions: List[str] = []
-    emotion_scores: Dict[str, float] = {}
-    people: List[str] = []
-    places: List[str] = []
+    topics: List[str] = Field(default_factory=list)
+    emotions: List[str] = Field(default_factory=list)
+    emotion_scores: Dict[str, float] = Field(default_factory=dict)
+    people: List[str] = Field(default_factory=list)
+    places: List[str] = Field(default_factory=list)
     word_count: Optional[int] = None
 
 
@@ -43,19 +47,26 @@ class InsightsSummary(BaseModel):
     total_words: int
     average_word_count: float
     entries_per_day: List[EntriesPerDay]
-    top_emotions: List[str] = []
-    top_topics: List[str] = []
-    top_people: List[str] = []
-    top_places: List[str] = []
+    top_emotions: List[str] = Field(default_factory=list)
+    top_topics: List[str] = Field(default_factory=list)
+    top_people: List[str] = Field(default_factory=list)
+    top_places: List[str] = Field(default_factory=list)
 
 
 class InsightsQueryRequest(BaseModel):
     question: str
 
 
+class UsedEntry(BaseModel):
+    id: int
+    created_at: datetime
+    preview: str
+
+
 class InsightsQueryResponse(BaseModel):
     answer: str
     used_entry_ids: List[int]
+    used_entries: List[UsedEntry] = Field(default_factory=list)
 
 
 @router.get("/entries", response_model=List[EntryPreview])
@@ -136,16 +147,14 @@ async def query_insights(
     payload: InsightsQueryRequest, session: Session = Depends(get_db_session)
 ):
     """
-    Answer a user question grounded in stored entries.
-    JSON: {"answer":"...","used_entry_ids":[1,2]}
+    Answer a user question grounded in stored entries using semantic search.
+    JSON: {"answer":"...","used_entry_ids":[1,2],"used_entries":[{"id":1,"created_at":"...","preview":"..."}]}
     """
     question = payload.question.strip()
     if not question:
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
-    entries = (
-        session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(12)).all()
-    )
+    entries = _fetch_similar_entries(question, session, top_k=6)
     if not entries:
         raise HTTPException(
             status_code=404, detail="No entries available for insights yet."
@@ -153,12 +162,21 @@ async def query_insights(
 
     context_lines: List[str] = []
     used_ids: List[int] = []
+    used_entries_meta: List[UsedEntry] = []
+
     for entry in entries:
         snippet = (entry.summary or entry.original_text or "").strip()
         if len(snippet) > 400:
             snippet = snippet[:400] + "..."
         context_lines.append(f"[Entry {entry.id} | {entry.created_at.date()}] {snippet}")
         used_ids.append(entry.id)
+        used_entries_meta.append(
+            UsedEntry(
+                id=entry.id,
+                created_at=entry.created_at,
+                preview=snippet,
+            )
+        )
 
     system_msg = (
         "You are a concise personal historian. "
@@ -190,7 +208,11 @@ async def query_insights(
     if not answer:
         answer = "I could not generate an answer from the stored entries."
 
-    return InsightsQueryResponse(answer=answer, used_entry_ids=used_ids)
+    return InsightsQueryResponse(
+        answer=answer,
+        used_entry_ids=used_ids,
+        used_entries=used_entries_meta,
+    )
 
 
 def _split(value: Optional[str]) -> List[str]:
@@ -221,3 +243,45 @@ def _is_number(val) -> bool:
 
 def _top_keys(counter: Counter, limit: int = 5) -> List[str]:
     return [item for item, _ in counter.most_common(limit) if item]
+
+
+def _fetch_similar_entries(
+    question: str, session: Session, top_k: int = 5
+) -> List[Entry]:
+    """
+    Embed the question and retrieve top-k entries by cosine similarity.
+    Falls back to recent entries if embeddings are missing.
+    """
+    question_vec = embed_text(question)
+    if not question_vec:
+        return session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(top_k)).all()
+
+    entries = session.exec(select(Entry)).all()
+
+    scored: List[Tuple[float, Entry]] = []
+    for entry in entries:
+        vec = deserialize_embedding(entry.embedding)
+        if not vec:
+            continue
+        sim = _cosine_similarity(question_vec, vec)
+        if sim is not None:
+            scored.append((sim, entry))
+
+    if not scored:
+        return session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(top_k)).all()
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [entry for _, entry in scored[:top_k]]
+
+
+def _cosine_similarity(a: List[float], b: List[float]) -> Optional[float]:
+    if not a or not b or len(a) != len(b):
+        return None
+    import math
+
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = math.sqrt(sum(x * x for x in a))
+    norm_b = math.sqrt(sum(y * y for y in b))
+    if norm_a == 0 or norm_b == 0:
+        return None
+    return dot / (norm_a * norm_b)
