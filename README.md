@@ -7,12 +7,19 @@ A lightweight life-story memory tool: record short voice notes, transcribe them 
 - Endpoint `POST /entries` accepts audio (`multipart/form-data`) or raw text; audio is transcribed with `gpt-4o-transcribe`.
 - Entry analysis via OpenAI (summary, themes, emotions, memory chunks) using `gpt-4o-mini`.
 - SQLite persistence via SQLModel (`ltm.db` by default).
-- Simple frontend (`frontend/index.html`) to record audio in the browser and send it to the API.
+- Simple frontend (`frontend/index.html`) with two tabs:
+  - **Capture**: record audio and send it to the API.
+  - **Insights & Q&A**: browse stored entries, view basic stats, and ask questions grounded in your data.
 - Daily prompt helper at `GET /prompt/daily`.
+ 
+### Insights endpoints (new)
+- `GET /insights/entries` – List entries with id, created_at, preview, summary.
+- `GET /insights/summary` – Aggregate stats: total_entries, total_words, entries_per_day.
+- `POST /insights/query` – `{ "question": "..." }` → `{ "answer": "...", "used_entry_ids": [...] }` using stored entries as context.
 
 ## Project Structure
 - `main.py` – FastAPI app, mounts routers and serves the static frontend.
-- `app/routers/` – API routes (`entries`, `health`, `prompts`).
+- `app/routers/` – API routes (`entries`, `health`, `prompts`, `insights`).
 - `app/services/` – Transcription, OpenAI analysis, and entry handling.
 - `app/db/` – Database setup and session helper.
 - `app/models/` – SQLModel entry definition.
@@ -49,12 +56,15 @@ API base: `http://127.0.0.1:8000`
 
 ## Frontend
 - Open `frontend/index.html` in your browser.
-- Click “Start Recording”, then “Stop & Save”.
-- The UI posts the audio blob to `http://localhost:8000/entries` and shows the analysis response.
+- **Capture tab:** click “Start Recording”, then “Stop & Save”. Audio posts to `http://localhost:8000/entries` and shows the analysis response.
+- **Insights & Q&A tab:** automatically fetches `/insights/entries` and `/insights/summary`, and lets you ask questions via `/insights/query`.
 
 ## API Quick Reference
 - `POST /entries` – Form data: `file` (audio) or `text` (string). Returns stored entry info + analysis.
 - `GET /prompt/daily` – Returns a generated daily reflection prompt.
+- `GET /insights/entries` – Entry previews for the Insights tab.
+- `GET /insights/summary` – Aggregate stats.
+- `POST /insights/query` – Ask a question grounded in stored entries.
 - `GET /health` – Basic health check.
 
 ## Notes

@@ -1,156 +1,521 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Life Story Voice Journal</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #111;
-      color: #eee;
-      padding: 30px;
-    }
-    h1 {
-      margin-top: 0;
-    }
-    button {
-      padding: 12px 25px;
-      background: #444;
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-      border: none;
-      border-radius: 6px;
-      margin-top: 10px;
-      margin-right: 10px;
-    }
-    button[disabled] {
-      opacity: 0.5;
-      cursor: default;
-    }
-    #log {
-      white-space: pre-wrap;
-      margin-top: 20px;
-      font-size: 14px;
-      background: #222;
-      padding: 15px;
-      border-radius: 6px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    #status {
-      margin-top: 10px;
-      font-style: italic;
-    }
-  </style>
-</head>
-
-<body>
-  <h1>Life Story Voice Assistant (Batch)</h1>
-  <p>
-    Click <strong>Start Recording</strong>, tell a story or reflect out loud, then click
-    <strong>Stop &amp; Save</strong>. Your audio will be sent to the server, transcribed,
-    analyzed, and stored in your memory database.
-  </p>
-
-  <button id="startBtn">🎤 Start Recording</button>
-  <button id="stopBtn" disabled>🛑 Stop &amp; Save</button>
-
-  <div id="status">Not recording.</div>
-  <div id="log"></div>
-
-  <script>
-    const startBtn = document.getElementById("startBtn");
-    const stopBtn = document.getElementById("stopBtn");
-    const statusEl = document.getElementById("status");
-    const logEl = document.getElementById("log");
-
-    let mediaRecorder = null;
-    let chunks = [];
-
-    function log(msg) {
-      const time = new Date().toLocaleTimeString();
-      logEl.textContent += `[${time}] ${msg}\n`;
-      logEl.scrollTop = logEl.scrollHeight;
-    }
-
-    async function startRecording() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        chunks = [];
-
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            chunks.push(e.data);
-          }
-        };
-
-        mediaRecorder.onstop = async () => {
-          const blob = new Blob(chunks, { type: "audio/webm" });
-
-          log("Recording stopped. Uploading entry to backend…");
-          statusEl.textContent = "Uploading and processing entry…";
-
-          const formData = new FormData();
-          formData.append("file", blob, "entry.webm");
-
-          try {
-            const resp = await fetch("http://localhost:8000/entries", {
-              method: "POST",
-              body: formData,
-            });
-
-            if (!resp.ok) {
-              const text = await resp.text();
-              log(`❌ Server error: ${resp.status} – ${text}`);
-              statusEl.textContent = "Error uploading entry.";
-              return;
-            }
-
-            const data = await resp.json();
-            log("✅ Entry stored. ID: " + data.entry_id);
-            if (data.analysis) {
-              log("Summary: " + (data.analysis.summary || "[none]"));
-              if (data.analysis.themes) {
-                log("Themes: " + JSON.stringify(data.analysis.themes));
-              }
-              if (data.analysis.emotions) {
-                log("Emotions: " + JSON.stringify(data.analysis.emotions));
-              }
-            }
-
-            statusEl.textContent = "Entry saved successfully.";
-          } catch (err) {
-            console.error(err);
-            log("❌ Failed to upload entry: " + err.message);
-            statusEl.textContent = "Upload failed.";
-          }
-        };
-
-        mediaRecorder.start();
-        statusEl.textContent = "Recording… tell your story.";
-        log("🎙 Recording started.");
-
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
-      } catch (err) {
-        console.error(err);
-        log("❌ Could not start recording: " + err.message);
-        statusEl.textContent = "Microphone access failed.";
+    <meta charset="UTF-8" />
+    <title>Life Story Voice Journal</title>
+    <style>
+      :root {
+        --bg: #0f0f0f;
+        --panel: #171717;
+        --muted: #bbbbbb;
+        --accent: #5b8def;
+        --accent-2: #6dd8b5;
       }
-    }
-
-    function stopRecording() {
-      if (mediaRecorder && mediaRecorder.state === "recording") {
-        mediaRecorder.stop();
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
+      body {
+        font-family: Arial, sans-serif;
+        background-color: var(--bg);
+        color: #eee;
+        padding: 30px;
+        max-width: 1100px;
+        margin: 0 auto;
       }
-    }
+      h1 {
+        margin-top: 0;
+        letter-spacing: 0.5px;
+      }
+      h2 {
+        margin: 0 0 10px;
+      }
+      p {
+        color: var(--muted);
+      }
+      button {
+        padding: 10px 18px;
+        background: #2a2a2a;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+        border: 1px solid #333;
+        border-radius: 6px;
+        margin-top: 10px;
+        margin-right: 10px;
+      }
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #0b1221;
+        font-weight: 600;
+      }
+      button[disabled] {
+        opacity: 0.6;
+        cursor: default;
+      }
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin: 20px 0;
+      }
+      .tab-btn {
+        padding: 12px 20px;
+        border-radius: 10px;
+        border: 1px solid #222;
+        background: #161616;
+        color: #ddd;
+      }
+      .tab-btn.active {
+        background: linear-gradient(135deg, #22304c, #1e283a);
+        border-color: #2e3d5b;
+        color: #fff;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid #1f1f1f;
+        border-radius: 10px;
+        padding: 18px;
+        margin-bottom: 16px;
+      }
+      #log {
+        white-space: pre-wrap;
+        margin-top: 12px;
+        font-size: 14px;
+        background: #0f1218;
+        padding: 15px;
+        border-radius: 6px;
+        max-height: 280px;
+        overflow-y: auto;
+        border: 1px solid #1b2335;
+      }
+      #status {
+        margin-top: 8px;
+        font-style: italic;
+        color: var(--muted);
+      }
+      .grid {
+        display: grid;
+        gap: 12px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th, td {
+        padding: 10px 8px;
+        border-bottom: 1px solid #1f1f1f;
+        text-align: left;
+      }
+      th {
+        color: #a6b7d3;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+      }
+      tr:hover {
+        background: #141822;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .chart {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .bar-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .bar-label {
+        width: 110px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .bar-track {
+        flex: 1;
+        height: 14px;
+        background: #1b1b1b;
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid #222;
+      }
+      .bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      }
+      textarea {
+        width: 100%;
+        min-height: 90px;
+        background: #121212;
+        color: #eee;
+        border: 1px solid #222;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 15px;
+      }
+      .answer-box {
+        background: #0f1218;
+        border: 1px solid #1f2a40;
+        border-radius: 10px;
+        padding: 14px;
+        margin-top: 10px;
+        line-height: 1.5;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
 
-    startBtn.addEventListener("click", startRecording);
-    stopBtn.addEventListener("click", stopRecording);
-  </script>
-</body>
+  <body>
+    <h1>Life Story Voice Assistant</h1>
+    <p>
+      Capture new memories or explore insights from what you've already shared.
+    </p>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="capture">Capture</button>
+      <button class="tab-btn" data-tab="insights">Insights &amp; Q&amp;A</button>
+    </div>
+
+    <section id="capture" class="tab-content active">
+      <div class="panel">
+        <h2>Record / Upload entry</h2>
+        <p class="muted">
+          Click <strong>Start Recording</strong>, tell a story, then click
+          <strong>Stop &amp; Save</strong>. Audio is transcribed, analyzed, and stored.
+        </p>
+        <button id="startBtn" class="primary">🎤 Start Recording</button>
+        <button id="stopBtn" disabled>🛑 Stop &amp; Save</button>
+        <div id="status">Not recording.</div>
+        <div id="log"></div>
+      </div>
+    </section>
+
+    <section id="insights" class="tab-content">
+      <div class="panel">
+        <h2>Your Entries</h2>
+        <div class="muted" id="entriesStatus">Loading entries…</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Preview</th>
+                <th>Summary</th>
+              </tr>
+            </thead>
+            <tbody id="entriesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Analytics</h2>
+        <div class="muted" id="summaryText">Loading stats…</div>
+        <div id="entriesChart" class="chart"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Ask a Question</h2>
+        <p class="muted">Ask anything you'd like to know based on your stored entries.</p>
+        <textarea id="questionInput" placeholder="What did I talk about last weekend?"></textarea>
+        <button id="askBtn" class="primary">Ask</button>
+        <div class="muted" id="askStatus"></div>
+        <div id="answerBox" class="answer-box hidden"></div>
+      </div>
+    </section>
+
+    <script>
+      const startBtn = document.getElementById("startBtn");
+      const stopBtn = document.getElementById("stopBtn");
+      const statusEl = document.getElementById("status");
+      const logEl = document.getElementById("log");
+
+      const entriesBody = document.getElementById("entriesBody");
+      const entriesStatus = document.getElementById("entriesStatus");
+      const summaryText = document.getElementById("summaryText");
+      const entriesChart = document.getElementById("entriesChart");
+      const questionInput = document.getElementById("questionInput");
+      const askBtn = document.getElementById("askBtn");
+      const askStatus = document.getElementById("askStatus");
+      const answerBox = document.getElementById("answerBox");
+
+      let mediaRecorder = null;
+      let chunks = [];
+      let insightsLoadedOnce = false;
+
+      // --- Capture tab logic (existing flow) ---
+      function log(msg) {
+        const time = new Date().toLocaleTimeString();
+        logEl.textContent += `[${time}] ${msg}\n`;
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      async function startRecording() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          chunks = [];
+
+          mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+              chunks.push(e.data);
+            }
+          };
+
+          mediaRecorder.onstop = async () => {
+            const blob = new Blob(chunks, { type: "audio/webm" });
+
+            log("Recording stopped. Uploading entry to backend…");
+            statusEl.textContent = "Uploading and processing entry…";
+
+            const formData = new FormData();
+            formData.append("file", blob, "entry.webm");
+
+            try {
+              const resp = await fetch("http://localhost:8000/entries", {
+                method: "POST",
+                body: formData,
+              });
+
+              if (!resp.ok) {
+                const text = await resp.text();
+                log(`❌ Server error: ${resp.status} – ${text}`);
+                statusEl.textContent = "Error uploading entry.";
+                return;
+              }
+
+              const data = await resp.json();
+              log("✅ Entry stored. ID: " + data.entry_id);
+              if (data.analysis) {
+                log("Summary: " + (data.analysis.summary || "[none]"));
+                if (data.analysis.themes) {
+                  log("Themes: " + JSON.stringify(data.analysis.themes));
+                }
+                if (data.analysis.emotions) {
+                  log("Emotions: " + JSON.stringify(data.analysis.emotions));
+                }
+              }
+
+              statusEl.textContent = "Entry saved successfully.";
+              insightsLoadedOnce = false; // refresh insights next time tab opens
+            } catch (err) {
+              console.error(err);
+              log("❌ Failed to upload entry: " + err.message);
+              statusEl.textContent = "Upload failed.";
+            }
+          };
+
+          mediaRecorder.start();
+          statusEl.textContent = "Recording… tell your story.";
+          log("🎙 Recording started.");
+
+          startBtn.disabled = true;
+          stopBtn.disabled = false;
+        } catch (err) {
+          console.error(err);
+          log("❌ Could not start recording: " + err.message);
+          statusEl.textContent = "Microphone access failed.";
+        }
+      }
+
+      function stopRecording() {
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+          mediaRecorder.stop();
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+        }
+      }
+
+      startBtn.addEventListener("click", startRecording);
+      stopBtn.addEventListener("click", stopRecording);
+
+      // --- Tabs ---
+      const tabButtons = document.querySelectorAll(".tab-btn");
+      const tabContents = document.querySelectorAll(".tab-content");
+
+      function setActiveTab(tabName) {
+        tabButtons.forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.tab === tabName);
+        });
+        tabContents.forEach((section) => {
+          section.classList.toggle("active", section.id === tabName);
+        });
+
+        if (tabName === "insights") {
+          loadInsights();
+        }
+      }
+
+      tabButtons.forEach((btn) => {
+        btn.addEventListener("click", () => setActiveTab(btn.dataset.tab));
+      });
+
+      // --- Insights tab logic ---
+      async function loadInsights() {
+        if (insightsLoadedOnce) {
+          return;
+        }
+        insightsLoadedOnce = true;
+        await Promise.all([fetchEntries(), fetchSummary()]);
+      }
+
+      async function fetchEntries() {
+        entriesStatus.textContent = "Loading entries…";
+        entriesBody.innerHTML = "";
+        try {
+          const resp = await fetch("http://localhost:8000/insights/entries");
+          if (!resp.ok) {
+            throw new Error(`Server responded with ${resp.status}`);
+          }
+          const data = await resp.json();
+          renderEntries(data);
+        } catch (err) {
+          entriesStatus.textContent = `Failed to load entries: ${err.message}`;
+        }
+      }
+
+      function renderEntries(entries) {
+        entriesBody.innerHTML = "";
+        if (!entries || entries.length === 0) {
+          entriesStatus.textContent = "No entries yet.";
+          return;
+        }
+        entriesStatus.textContent = "";
+
+        entries.forEach((entry) => {
+          const tr = document.createElement("tr");
+
+          const dateTd = document.createElement("td");
+          dateTd.textContent = new Date(entry.created_at).toLocaleString();
+
+          const previewTd = document.createElement("td");
+          previewTd.textContent = entry.preview || "";
+
+          const summaryTd = document.createElement("td");
+          summaryTd.textContent = entry.summary || "—";
+
+          tr.appendChild(dateTd);
+          tr.appendChild(previewTd);
+          tr.appendChild(summaryTd);
+          entriesBody.appendChild(tr);
+        });
+      }
+
+      async function fetchSummary() {
+        summaryText.textContent = "Loading stats…";
+        entriesChart.innerHTML = "";
+        try {
+          const resp = await fetch("http://localhost:8000/insights/summary");
+          if (!resp.ok) {
+            throw new Error(`Server responded with ${resp.status}`);
+          }
+          const data = await resp.json();
+          renderSummary(data);
+        } catch (err) {
+          summaryText.textContent = `Failed to load stats: ${err.message}`;
+        }
+      }
+
+      function renderSummary(data) {
+        if (!data) {
+          summaryText.textContent = "No data available.";
+          return;
+        }
+
+        const { total_entries, total_words, entries_per_day } = data;
+        summaryText.textContent = `You've created ${total_entries} entries with ${total_words} total words.`;
+
+        entriesChart.innerHTML = "";
+        if (!entries_per_day || entries_per_day.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "muted";
+          empty.textContent = "No entries per-day data yet.";
+          entriesChart.appendChild(empty);
+          return;
+        }
+
+        const maxCount = Math.max(...entries_per_day.map((d) => d.count));
+
+        entries_per_day.forEach((item) => {
+          const row = document.createElement("div");
+          row.className = "bar-row";
+
+          const label = document.createElement("div");
+          label.className = "bar-label";
+          label.textContent = item.date;
+
+          const track = document.createElement("div");
+          track.className = "bar-track";
+
+          const fill = document.createElement("div");
+          fill.className = "bar-fill";
+          const percentage = maxCount ? (item.count / maxCount) * 100 : 0;
+          fill.style.width = `${Math.max(8, percentage)}%`;
+          track.appendChild(fill);
+
+          const count = document.createElement("div");
+          count.className = "bar-label";
+          count.style.width = "40px";
+          count.textContent = item.count;
+
+          row.appendChild(label);
+          row.appendChild(track);
+          row.appendChild(count);
+          entriesChart.appendChild(row);
+        });
+      }
+
+      async function askQuestion() {
+        const question = questionInput.value.trim();
+        if (!question) {
+          askStatus.textContent = "Please enter a question.";
+          return;
+        }
+
+        askStatus.textContent = "Thinking…";
+        askBtn.disabled = true;
+        answerBox.classList.add("hidden");
+
+        try {
+          const resp = await fetch("http://localhost:8000/insights/query", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ question }),
+          });
+
+          if (!resp.ok) {
+            const text = await resp.text();
+            throw new Error(text || `Server responded with ${resp.status}`);
+          }
+
+          const data = await resp.json();
+          answerBox.textContent = data.answer || "No answer returned.";
+          answerBox.classList.remove("hidden");
+          askStatus.textContent = data.used_entry_ids
+            ? `Used entries: ${data.used_entry_ids.join(", ")}`
+            : "";
+        } catch (err) {
+          askStatus.textContent = `Error: ${err.message}`;
+        } finally {
+          askBtn.disabled = false;
+        }
+      }
+
+      askBtn.addEventListener("click", askQuestion);
+
+      // Initial state
+      setActiveTab("capture");
+    </script>
+  </body>
 </html>
