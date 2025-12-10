@@ -263,6 +263,10 @@
         background: #0f1218;
         margin-top: 10px;
       }
+      .recap-grid {
+        display: grid;
+        gap: 10px;
+      }
       .recap-meta {
         color: var(--muted);
         font-size: 13px;
@@ -348,10 +352,19 @@
       <div class="panel">
         <h2>Recaps</h2>
         <p class="muted">Generate weekly or monthly snapshots of themes, mood, and highlights.</p>
-        <button id="weeklyBtn" class="primary">Generate weekly recap</button>
-        <button id="monthlyBtn">Generate monthly recap</button>
-        <div class="muted" id="recapStatus"></div>
-        <div id="recapResult" class="recap-card hidden"></div>
+        <div class="recap-grid">
+          <div>
+            <button id="weeklyQuickBtn" class="primary">Generate weekly recap</button>
+            <div class="muted" id="weeklyQuickStatus"></div>
+            <div id="weeklyQuickResult" class="recap-card hidden"></div>
+          </div>
+          <div>
+            <button id="weeklyBtn">Generate detailed weekly recap</button>
+            <button id="monthlyBtn" style="margin-left:6px;">Generate monthly recap</button>
+            <div class="muted" id="recapStatus"></div>
+            <div id="recapResult" class="recap-card hidden"></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -379,6 +392,9 @@
       const monthlyBtn = document.getElementById("monthlyBtn");
       const recapStatus = document.getElementById("recapStatus");
       const recapResult = document.getElementById("recapResult");
+      const weeklyQuickBtn = document.getElementById("weeklyQuickBtn");
+      const weeklyQuickStatus = document.getElementById("weeklyQuickStatus");
+      const weeklyQuickResult = document.getElementById("weeklyQuickResult");
 
       let mediaRecorder = null;
       let chunks = [];
@@ -820,6 +836,32 @@
         `;
       }
 
+      async function generateWeeklyQuick() {
+        weeklyQuickStatus.textContent = "Generating...";
+        weeklyQuickResult.classList.add("hidden");
+        weeklyQuickResult.innerHTML = "";
+        weeklyQuickBtn.disabled = true;
+        try {
+          const resp = await fetch("http://localhost:8000/insights/weekly");
+          if (!resp.ok) {
+            const text = await resp.text();
+            throw new Error(text || `Server responded with ${resp.status}`);
+          }
+          const data = await resp.json();
+          weeklyQuickResult.classList.remove("hidden");
+          weeklyQuickResult.innerHTML = `
+            <div class="recap-meta">Entries: ${data.total_entries} • Avg sentiment: ${data.average_sentiment ?? "—"}</div>
+            <div><strong>Summary:</strong> ${data.summary || "—"}</div>
+            <div style="margin-top:8px;"><strong>Top topics:</strong> ${(data.top_topics || []).join(", ") || "—"}</div>
+          `;
+          weeklyQuickStatus.textContent = "";
+        } catch (err) {
+          weeklyQuickStatus.textContent = `Error: ${err.message}`;
+        } finally {
+          weeklyQuickBtn.disabled = false;
+        }
+      }
+
       async function askQuestion() {
         const question = questionInput.value.trim();
         if (!question) {
@@ -871,6 +913,7 @@
 
       askBtn.addEventListener("click", askQuestion);
       chatSendBtn.addEventListener("click", sendConversationMessage);
+      weeklyQuickBtn.addEventListener("click", generateWeeklyQuick);
       weeklyBtn.addEventListener("click", () => generateRecap("weekly"));
       monthlyBtn.addEventListener("click", () => generateRecap("monthly"));
 

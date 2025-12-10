@@ -72,6 +72,7 @@ class RecapResponse(BaseModel):
     top_people: List[str] = Field(default_factory=list)
     top_places: List[str] = Field(default_factory=list)
     mood_trajectory: List[MoodPoint] = Field(default_factory=list)
+    average_sentiment: Optional[float] = None
     summary: str
     themes: List[str] = Field(default_factory=list)
     highlights: List[str] = Field(default_factory=list)
@@ -346,6 +347,7 @@ def _build_recap(period: str, days: int, session: Session) -> RecapResponse:
         "top_people": _top_keys(people_counts),
         "top_places": _top_keys(places_counts),
         "mood_points": [mp.model_dump() for mp in mood_points],
+        "average_sentiment": (sum(sentiment_scores) / len(sentiment_scores)) if sentiment_scores else None,
     }
 
     summary, themes, highlights = _synthesize_recap(entries, stats_context)
@@ -359,6 +361,7 @@ def _build_recap(period: str, days: int, session: Session) -> RecapResponse:
         top_people=stats_context["top_people"],
         top_places=stats_context["top_places"],
         mood_trajectory=mood_points,
+        average_sentiment=stats_context["average_sentiment"],
         summary=summary,
         themes=themes,
         highlights=highlights,
