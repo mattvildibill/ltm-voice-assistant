@@ -162,7 +162,7 @@ def get_summary(session: Session = Depends(get_db_session)):
     """
     entries = session.exec(select(Entry)).all()
     total_entries = len(entries)
-    total_words = sum(entry.word_count or len((entry.original_text or "").split()) for entry in entries)
+    total_words = sum(_entry_word_count(entry) for entry in entries)
     average_word_count = (total_words / total_entries) if total_entries else 0
 
     counts = Counter()
@@ -396,6 +396,12 @@ def _top_keys(counter: Counter, limit: int = 5) -> List[str]:
     return [item for item, _ in counter.most_common(limit) if item]
 
 
+def _entry_word_count(entry: Entry) -> int:
+    if entry.word_count is not None:
+        return entry.word_count
+    return len((entry.original_text or "").split())
+
+
 def _fetch_similar_entries(
     question: str, session: Session, top_k: int = 5, debug: bool = False
 ) -> Union[List[Entry], Tuple[List[Entry], Optional[List[Dict]]]]:
@@ -423,7 +429,7 @@ def _build_recap(period: str, days: int, session: Session) -> RecapResponse:
         raise HTTPException(status_code=404, detail=f"No entries found for {period} recap.")
 
     total_entries = len(entries)
-    total_words = sum(entry.word_count or len((entry.original_text or "").split()) for entry in entries)
+    total_words = sum(_entry_word_count(entry) for entry in entries)
 
     emotion_counts = Counter()
     topic_counts = Counter()
