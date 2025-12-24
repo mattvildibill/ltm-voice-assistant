@@ -61,7 +61,24 @@ def client(monkeypatch, tmp_path):
         # return existing entries with a constant score for determinism
         return [(1.0, e) for e in list(entries)[:top_k]]
 
-    monkeypatch.setattr(insights_router, "find_similar_entries", fake_find_similar_entries)
+    from app.services import embedding_service
+    # Patch retrieval scoring to avoid network
+    import app.services.retrieval_scoring as retrieval_scoring
+
+    class DummyRerankResult:
+        def __init__(self, entries):
+            self.entries = entries
+            self.debug = None
+
+    def fake_rerank(question, entries, top_n=10, candidate_k=50, debug=False, now=None):
+        return DummyRerankResult(list(entries)[:top_n])
+
+    monkeypatch.setattr(retrieval_scoring, "embed_text", lambda text: [0.1, 0.2, 0.3])
+    monkeypatch.setattr(retrieval_scoring, "deserialize_embedding", lambda raw: [0.1, 0.2, 0.3])
+    monkeypatch.setattr(retrieval_scoring, "cosine_similarity", lambda a, b: 0.5)
+    monkeypatch.setattr(retrieval_scoring, "rerank_entries", fake_rerank)
+    monkeypatch.setattr(insights_router, "rerank_entries", fake_rerank)
+    monkeypatch.setattr(conversation_router, "rerank_entries", fake_rerank)
 
     class DummyChoice:
         def __init__(self, content: str):
@@ -79,10 +96,7 @@ def client(monkeypatch, tmp_path):
 
     # Ensure deserialize works with stored embeddings
     monkeypatch.setattr(
-        insights_router, "deserialize_embedding", lambda raw: [0.1, 0.2, 0.3]
-    )
-    monkeypatch.setattr(
-        conversation_router, "deserialize_embedding", lambda raw: [0.1, 0.2, 0.3]
+        embedding_service, "deserialize_embedding", lambda raw: [0.1, 0.2, 0.3]
     )
 
     # Recreate tables with overrides
@@ -99,7 +113,20 @@ def test_entry_creation(client: TestClient):
     assert resp.status_code == 200, resp.text
     data = resp.json()
     assert "entry_id" in data
+    assert isinstance(data["entry_id"], str)
     assert data["word_count"] > 0
+    assert data["memory_type"] == "reflection"
+    assert data["source"] == "typed"
+    assert data["confidence_score"] == pytest.approx(0.95)
+    assert data["last_confirmed_at"] is None
+    assert data["updated_at"] is not None
+
+    # Ensure the entry persisted with the expected memory_type
+    entries = client.get("/insights/entries").json()
+    assert entries, "No entries returned from insights"
+    assert entries[0]["memory_type"] == "reflection"
+    assert entries[0]["source"] == "typed"
+    assert entries[0]["confidence_score"] == pytest.approx(0.95)
 
 
 def test_insights_summary(client: TestClient):
@@ -122,3 +149,44 @@ def test_insights_query(client: TestClient):
     payload = resp.json()
     assert payload["answer"]
     assert payload["used_entry_ids"]
+
+
+def test_backwards_compatibility_memory_type_default(client: TestClient):
+    """
+    Simulate legacy entry objects missing memory_type and ensure we default to 'event'.
+    """
+    from app.routers import insights as insights_router
+
+    class Legacy:
+        def __init__(self):
+            self.id = "legacy-id"
+            self.created_at = None
+            self.summary = "legacy summary"
+            self.original_text = "legacy text"
+            self.memory_type = None
+            self.tags = None
+
+    legacy_entry = Legacy()
+    assert insights_router._memory_type(legacy_entry) == "event"
+
+
+def test_confirm_entry_updates_confidence_and_timestamp(client: TestClient):
+    create = client.post("/entries", data={"text": "I like hiking and coding."}).json()
+    entry_id = create["entry_id"]
+    confirm = client.post(f"/entries/{entry_id}/confirm").json()
+    assert confirm["entry_id"] == entry_id
+    assert confirm["confidence_score"] > create["confidence_score"]
+    assert confirm["confidence_score"] <= 1.0
+    assert confirm["last_confirmed_at"] is not None
+
+
+def test_invalid_source_rejected(client: TestClient):
+    resp = client.post("/entries", data={"text": "Bad source", "source": "not-valid"})
+    assert resp.status_code == 400
+
+
+def test_confidence_clamped(client: TestClient):
+    resp = client.post("/entries", data={"text": "High confidence", "confidence_score": 5})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["confidence_score"] == pytest.approx(1.0)

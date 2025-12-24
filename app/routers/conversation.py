@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 
 from app.db.database import get_session
 from app.models.entry import Entry
-from app.services.embedding_service import find_similar_entries
+from app.services.retrieval_scoring import rerank_entries
 from app.services.openai_service import client
 
 router = APIRouter(prefix="/conversation", tags=["conversation"])
@@ -24,7 +24,7 @@ class ConversationRequest(BaseModel):
 
 class ConversationResponse(BaseModel):
     response: str
-    used_entry_ids: List[int] = Field(default_factory=list)
+    used_entry_ids: List[str] = Field(default_factory=list)
 
 
 # Simple in-memory conversation state (single-user use case)
@@ -61,7 +61,7 @@ async def conversation_respond(
             status_code=404, detail="No entries available for conversation yet."
         )
 
-    used_ids: List[int] = []
+    used_ids: List[str] = []
     entry_context_lines: List[str] = []
     for entry in entries:
         snippet = (entry.summary or entry.original_text or "").strip()
@@ -119,13 +119,11 @@ def _fetch_similar_entries(
     question: str, session: Session, top_k: int = 5
 ) -> List[Entry]:
     """
-    Embed the question and retrieve top-k entries by cosine similarity.
-    Falls back to recent entries if embeddings are missing.
+    Candidate generation (top-50 similarity) followed by reranking with context-aware scoring.
+    Falls back to recency if embeddings are missing.
     """
     entries = session.exec(select(Entry)).all()
-    scored = find_similar_entries(question, entries, top_k=top_k)
-    if scored:
-        return [entry for _, entry in scored]
-    return (
-        session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(top_k)).all()
-    )
+    result = rerank_entries(question, entries, top_n=top_k, candidate_k=50, debug=False)
+    if result.entries:
+        return result.entries
+    return session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(top_k)).all()

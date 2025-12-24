@@ -1,7 +1,7 @@
 import json
 from collections import Counter
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -10,7 +10,7 @@ from sqlmodel import Session, select
 from app.db.database import get_session
 from app.models.entry import Entry
 from app.services.openai_service import client
-from app.services.embedding_service import find_similar_entries
+from app.services.retrieval_scoring import rerank_entries
 
 router = APIRouter(prefix="/insights", tags=["insights"])
 
@@ -22,8 +22,9 @@ def get_db_session():
 
 
 class EntryPreview(BaseModel):
-    id: int
+    id: str
     created_at: datetime
+    updated_at: datetime
     preview: str
     summary: Optional[str] = None
     topics: List[str] = Field(default_factory=list)
@@ -34,6 +35,11 @@ class EntryPreview(BaseModel):
     word_count: Optional[int] = None
     sentiment_label: Optional[str] = None
     sentiment_score: Optional[float] = None
+    memory_type: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+    source: Optional[str] = None
+    confidence_score: Optional[float] = None
+    last_confirmed_at: Optional[datetime] = None
 
 
 class EntriesPerDay(BaseModel):
@@ -80,18 +86,26 @@ class RecapResponse(BaseModel):
 
 class InsightsQueryRequest(BaseModel):
     question: str
+    debug: bool = False
 
 
 class UsedEntry(BaseModel):
-    id: int
+    id: str
     created_at: datetime
+    updated_at: datetime
     preview: str
+    memory_type: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+    source: Optional[str] = None
+    confidence_score: Optional[float] = None
+    last_confirmed_at: Optional[datetime] = None
 
 
 class InsightsQueryResponse(BaseModel):
     answer: str
-    used_entry_ids: List[int]
+    used_entry_ids: List[str]
     used_entries: List[UsedEntry] = Field(default_factory=list)
+    debug: Optional[List[Dict]] = None
 
 
 @router.get("/entries", response_model=List[EntryPreview])
@@ -112,6 +126,7 @@ def list_entries(session: Session = Depends(get_db_session)):
             EntryPreview(
                 id=entry.id,
                 created_at=entry.created_at,
+                updated_at=entry.updated_at,
                 preview=preview_text,
                 summary=entry.summary,
                 topics=_split(entry.topics),
@@ -122,6 +137,11 @@ def list_entries(session: Session = Depends(get_db_session)):
                 word_count=entry.word_count,
                 sentiment_label=entry.sentiment_label,
                 sentiment_score=entry.sentiment_score,
+                memory_type=_memory_type(entry),
+                tags=_listify(entry.tags),
+                source=_source(entry),
+                confidence_score=_confidence(entry),
+                last_confirmed_at=getattr(entry, "last_confirmed_at", None),
             )
         )
 
@@ -185,14 +205,19 @@ async def query_insights(
     if not question:
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
-    entries = _fetch_similar_entries(question, session, top_k=6)
+    fetched = _fetch_similar_entries(question, session, top_k=6, debug=payload.debug)
+    if isinstance(fetched, tuple):
+        entries, debug_data = fetched
+    else:
+        entries = fetched
+        debug_data = None
     if not entries:
         raise HTTPException(
             status_code=404, detail="No entries available for insights yet."
         )
 
     context_lines: List[str] = []
-    used_ids: List[int] = []
+    used_ids: List[str] = []
     used_entries_meta: List[UsedEntry] = []
 
     for entry in entries:
@@ -205,7 +230,13 @@ async def query_insights(
             UsedEntry(
                 id=entry.id,
                 created_at=entry.created_at,
+                updated_at=entry.updated_at,
                 preview=snippet,
+                memory_type=_memory_type(entry),
+                tags=_listify(entry.tags),
+                source=_source(entry),
+                confidence_score=_confidence(entry),
+                last_confirmed_at=getattr(entry, "last_confirmed_at", None),
             )
         )
 
@@ -243,6 +274,7 @@ async def query_insights(
         answer=answer,
         used_entry_ids=used_ids,
         used_entries=used_entries_meta,
+        debug=debug_data if payload.debug else None,
     )
 
 
@@ -254,6 +286,38 @@ def weekly_recap(session: Session = Depends(get_db_session)):
 @router.get("/monthly", response_model=RecapResponse)
 def monthly_recap(session: Session = Depends(get_db_session)):
     return _build_recap(period="monthly", days=30, session=session)
+
+
+def _memory_type(entry: Entry) -> str:
+    value = getattr(entry, "memory_type", None)
+    return value.value if hasattr(value, "value") else (value or "event")
+
+
+def _listify(value) -> List[str]:
+    if not value:
+        return []
+    if isinstance(value, list):
+        return [str(v).strip() for v in value if str(v).strip()]
+    if isinstance(value, str):
+        try:
+            loaded = json.loads(value)
+            if isinstance(loaded, list):
+                return [str(v).strip() for v in loaded if str(v).strip()]
+        except Exception:
+            pass
+    return _split(value if isinstance(value, str) else str(value))
+
+
+def _source(entry: Entry) -> str:
+    value = getattr(entry, "source", None)
+    return value.value if hasattr(value, "value") else (value or "unknown")
+
+
+def _confidence(entry: Entry) -> Optional[float]:
+    try:
+        return float(getattr(entry, "confidence_score", None))
+    except (TypeError, ValueError):
+        return None
 
 
 def _split(value: Optional[str]) -> List[str]:
@@ -287,17 +351,17 @@ def _top_keys(counter: Counter, limit: int = 5) -> List[str]:
 
 
 def _fetch_similar_entries(
-    question: str, session: Session, top_k: int = 5
-) -> List[Entry]:
+    question: str, session: Session, top_k: int = 5, debug: bool = False
+) -> Union[List[Entry], Tuple[List[Entry], Optional[List[Dict]]]]:
     """
-    Embed the question and retrieve top-k entries by cosine similarity.
-    Falls back to recent entries if embeddings are missing.
+    Candidate generation (top-50 similarity) followed by reranking with context-aware scoring.
+    Returns entries, and debug metadata if requested.
     """
     all_entries = session.exec(select(Entry)).all()
-    scored = find_similar_entries(question, all_entries, top_k=top_k)
-    if scored:
-        return [entry for _, entry in scored]
-    return session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(top_k)).all()
+    result = rerank_entries(question, all_entries, top_n=top_k, candidate_k=50, debug=debug)
+    if debug:
+        return result.entries, result.debug
+    return result.entries
 
 
 def _build_recap(period: str, days: int, session: Session) -> RecapResponse:

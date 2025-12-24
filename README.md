@@ -96,3 +96,46 @@ API base: `http://127.0.0.1:8000`
 ## Tests
 - Basic pytest suite exercises entry creation, insights summary, and Q&A (`tests/test_api.py`).
 - Run with: `pytest`
+
+## Seeding fake data (no OpenAI)
+- Generate one year of synthetic daily entries without hitting OpenAI:
+  ```bash
+  python scripts/seed_fake_year.py         # adds on top of existing data
+  python scripts/seed_fake_year.py --wipe  # wipes entries first
+  ```
+  Data is written directly to the DB, so ensure Alembic has run and your `.env`/venv are loaded. 
+
+## Memory schema
+- Memory types (`event`, `reflection`, `preference`, `identity`, `project`) and normalized fields are documented in `docs/memory_schema.md`.
+
+## System flow (high level)
+```
+User (typed/voice)
+    │
+    ├─► /entries (FastAPI)
+    │     ├─ audio? → realtime transcription
+    │     ├─ analysis (summary, topics, sentiment, tags)
+    │     ├─ embedding (OpenAI)
+    │     └─ classify memory_type + source + confidence defaults
+    │            ↓
+    │         SQLite (SQLModel + Alembic)
+    │            ├─ normalized memory fields (id/user/memory_type/title/content/tags)
+    │            ├─ trust metadata (source, confidence_score, last_confirmed_at, updated_at)
+    │            └─ analysis fields (summary/topics/emotions/embedding/etc.)
+    │
+    ├─► /entries/{id}/confirm
+    │     └─ bump confidence, set last_confirmed_at, update timestamp
+    │
+    ├─► /insights/query
+    │     ├─ candidate gen (top-50 embedding similarity)
+    │     ├─ rerank: similarity + recency decay + importance + confidence + domain boost
+    │     └─ OpenAI response grounded in reranked memories
+    │
+    ├─► /conversation/respond
+    │     └─ same rerank pipeline → contextual chat
+    │
+    └─► Frontend (frontend/index.html)
+          ├─ Capture tab (record/send)
+          ├─ Timeline (recent entries)
+          └─ Insights & Chat (summary cards, recaps, Q&A/chat)
+```
