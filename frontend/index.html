@@ -207,6 +207,17 @@
     }
     button[disabled] { opacity: 0.6; cursor: default; transform: none; box-shadow: none; }
 
+    .user-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
     .controls {
       display: flex;
       gap: 10px;
@@ -333,10 +344,15 @@
     <section class="hero">
       <div class="hero-top">
         <div class="brand-mark">LS</div>
-        <div>
+        <div style="flex: 1;">
           <div class="eyebrow">Life Story Voice Assistant</div>
           <h1>Voice-led journaling built for retrieval-grounded chat</h1>
           <p>Capture stories in seconds, keep an auditable timeline, and ask questions answered using only the entries you have stored.</p>
+        </div>
+        <div style="min-width: 220px;">
+          <div class="eyebrow">Active User</div>
+          <input id="userIdInput" class="user-input" type="text" placeholder="default-user" />
+          <div class="muted small" style="margin-top: 6px;">Used to scope entries.</div>
         </div>
       </div>
       <div class="chip-row">
@@ -522,6 +538,38 @@
     let conversationHistory = [];
     let entriesCache = [];
     let summaryCache = null;
+    const userIdInput = document.getElementById("userIdInput");
+    const USER_ID_STORAGE_KEY = "ltm-user-id";
+
+    const savedUserId = localStorage.getItem(USER_ID_STORAGE_KEY);
+    if (savedUserId) {
+      userIdInput.value = savedUserId;
+    }
+
+    function getUserId() {
+      const val = (userIdInput.value || "").trim();
+      return val || "default-user";
+    }
+
+    function fetchWithUser(url, options = {}) {
+      const headers = new Headers(options.headers || {});
+      headers.set("X-User-Id", getUserId());
+      return fetch(url, { ...options, headers });
+    }
+
+    function resetUserScopedState() {
+      entriesCache = [];
+      summaryCache = null;
+      conversationHistory = [];
+      renderConversation();
+      loadEntries();
+      loadSummary();
+    }
+
+    userIdInput.addEventListener("change", () => {
+      localStorage.setItem(USER_ID_STORAGE_KEY, getUserId());
+      resetUserScopedState();
+    });
 
     // --- Tab logic ---
     function setActiveTab(tabName) {
@@ -560,7 +608,7 @@
           formData.append("file", blob, "entry.webm");
 
           try {
-            const resp = await fetch("http://localhost:8000/entries", { method: "POST", body: formData });
+            const resp = await fetchWithUser("http://localhost:8000/entries", { method: "POST", body: formData });
             if (!resp.ok) {
               const text = await resp.text();
               log(`❌ Server error: ${resp.status} – ${text}`);
@@ -611,7 +659,7 @@
       }
       timelineStatus.textContent = "Loading…";
       try {
-        const resp = await fetch("http://localhost:8000/insights/entries");
+        const resp = await fetchWithUser("http://localhost:8000/insights/entries");
         if (!resp.ok) throw new Error(`Server responded with ${resp.status}`);
         entriesCache = await resp.json();
         renderRecent(entriesCache);
@@ -630,7 +678,7 @@
       summaryText.textContent = "Loading stats…";
       entriesChart.innerHTML = "";
       try {
-        const resp = await fetch("http://localhost:8000/insights/summary");
+        const resp = await fetchWithUser("http://localhost:8000/insights/summary");
         if (!resp.ok) throw new Error(`Server responded with ${resp.status}`);
         summaryCache = await resp.json();
         renderSummary(summaryCache);
@@ -781,7 +829,7 @@
       weeklyQuickResult.innerHTML = "";
       weeklyQuickBtn.disabled = true;
       try {
-        const resp = await fetch("http://localhost:8000/insights/weekly");
+        const resp = await fetchWithUser("http://localhost:8000/insights/weekly");
         if (resp.status === 404) {
           weeklyQuickStatus.textContent = "Add at least one entry in the last 7 days to get a recap.";
           return;
@@ -815,7 +863,7 @@
       promptBtn.disabled = true;
       promptUseBtn.disabled = true;
       try {
-        const resp = await fetch("http://localhost:8000/insights/prompt");
+        const resp = await fetchWithUser("http://localhost:8000/insights/prompt");
         if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
         const data = await resp.json();
         promptText.textContent = data.prompt || "No prompt generated.";
@@ -856,7 +904,7 @@
       chatInput.value = "";
 
       try {
-        const resp = await fetch("http://localhost:8000/conversation/respond", {
+        const resp = await fetchWithUser("http://localhost:8000/conversation/respond", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: conversationHistory }),

@@ -83,6 +83,7 @@ API base: `http://127.0.0.1:8000`
 - The backend uses OpenAI; make sure the `.env` file is loaded before running.
 - `ltm.db` is ignored by git; delete it if you want a fresh database.
 - Update CORS or host settings in `main.py` if you deploy beyond local dev.
+- Multi-user scoping: supply an `X-User-Id` header on API requests to isolate entries per user (the frontend now includes an “Active User” input that sets this header). If omitted, requests default to `default-user`.
 
 ## Configuration
 - Managed via Pydantic settings in `app/core/config.py` (loads `.env`).
