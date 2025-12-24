@@ -39,7 +39,7 @@ def client(monkeypatch, tmp_path):
 
     app.dependency_overrides[insights_router.get_db_session] = get_test_session
     app.dependency_overrides[conversation_router.get_db_session] = get_test_session
-    conversation_router.conversation_state["messages"] = []
+    conversation_router.conversation_state.clear()
 
     # Stub analysis + embeddings to avoid network
     def fake_analysis(text: str):

@@ -79,6 +79,7 @@ def _normalize_confidence(confidence: Optional[float], source: SourceType) -> fl
 async def process_entry(
     text: Optional[str],
     file: Optional[UploadFile],
+    user_id: str,
     source: Optional[str] = None,
     confidence_score: Optional[float] = None,
 ):
@@ -157,6 +158,7 @@ async def process_entry(
     # Store in database
     with get_session() as session:
         entry = Entry(
+            user_id=user_id,
             source_type=source_type,
             original_text=text,
             content=text,
