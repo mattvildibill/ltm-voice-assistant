@@ -108,6 +108,12 @@ class InsightsQueryResponse(BaseModel):
     debug: Optional[List[Dict]] = None
 
 
+class PromptResponse(BaseModel):
+    prompt: str
+    source: str = "ai"
+    note: Optional[str] = None
+
+
 @router.get("/entries", response_model=List[EntryPreview])
 def list_entries(session: Session = Depends(get_db_session)):
     """
@@ -288,6 +294,46 @@ def monthly_recap(session: Session = Depends(get_db_session)):
     return _build_recap(period="monthly", days=30, session=session)
 
 
+@router.get("/prompt", response_model=PromptResponse)
+def generate_prompt(session: Session = Depends(get_db_session)):
+    """
+    Generate a writing/chat prompt tailored to recent entries (topics, people, places).
+    Falls back to a generic idea if no entries or OpenAI is unavailable.
+    """
+    entries = session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(20)).all()
+    if not entries:
+        return PromptResponse(
+            prompt="Think back on this week: what moment surprised you and how did it change your mood or plans?",
+            source="fallback",
+            note="No entries found; returned a generic prompt.",
+        )
+
+    topic_counts = Counter()
+    people_counts = Counter()
+    places_counts = Counter()
+    for entry in entries:
+        topic_counts.update(_split(entry.topics))
+        people_counts.update(_split(entry.people))
+        places_counts.update(_split(entry.places))
+
+    context = {
+        "top_topics": _top_keys(topic_counts, limit=5),
+        "top_people": _top_keys(people_counts, limit=5),
+        "top_places": _top_keys(places_counts, limit=5),
+        "latest_dates": [entry.created_at.date().isoformat() for entry in entries[:3]],
+    }
+
+    prompt = _synthesize_prompt(entries, context)
+    if not prompt:
+        return PromptResponse(
+            prompt="Recall a recent conversation or event that stuck with you. What did it reveal about what you value most right now?",
+            source="fallback",
+            note="Unable to reach OpenAI; returned a generic prompt.",
+        )
+
+    return PromptResponse(prompt=prompt, source="ai")
+
+
 def _memory_type(entry: Entry) -> str:
     value = getattr(entry, "memory_type", None)
     return value.value if hasattr(value, "value") else (value or "event")
@@ -435,6 +481,45 @@ def _build_recap(period: str, days: int, session: Session) -> RecapResponse:
     )
 
 
+def _synthesize_prompt(entries: List[Entry], context: Dict) -> str:
+    """
+    Generate a conversational prompt tailored to recent topics/people/places.
+    """
+    snippets = []
+    for entry in entries[:10]:
+        text = (entry.summary or entry.original_text or "").strip()
+        if len(text) > 140:
+            text = text[:137] + "..."
+        snippets.append(f"[{entry.created_at.date()}] {text}")
+
+    system_msg = (
+        "You are a warm, specific journaling coach. Suggest one question the user can answer. "
+        "Blend their recurring topics/people/places into the prompt, keep it brief, grounded, "
+        "and conversational. Encourage sensory detail and reflection, not generic advice."
+    )
+    user_content = (
+        f"Top topics: {context.get('top_topics')}\n"
+        f"Top people: {context.get('top_people')}\n"
+        f"Top places: {context.get('top_places')}\n"
+        f"Recent dates: {context.get('latest_dates')}\n\n"
+        "Recent snippets:\n" + "\n".join(snippets)
+    )
+
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": user_content},
+            ],
+            temperature=0.7,
+        )
+    except Exception:
+        return ""
+
+    return resp.choices[0].message.content.strip() if resp.choices else ""
+
+
 def _synthesize_recap(entries: List[Entry], stats: Dict) -> Tuple[str, List[str], List[str]]:
     """
     Use OpenAI to synthesize a recap from locally computed stats + entry snippets.
@@ -447,9 +532,12 @@ def _synthesize_recap(entries: List[Entry], stats: Dict) -> Tuple[str, List[str]
         snippets.append(f"[{entry.created_at.date()}] {text}")
 
     system_msg = (
-        "You are a personal memory analyst. Given journal entry snippets and local stats, "
-        "write a concise recap that feels personal and grounded in the user's entries. "
-        "Keep it brief and do not invent facts beyond the provided snippets."
+        "You are a personal memory analyst and gentle storyteller. "
+        "Given journal entry snippets and local stats, return a JSON object with keys "
+        '`summary` (2-3 sentences, first-person, emotionally aware, grounded in snippets), '
+        '`themes` (3 short phrases capturing patterns), and '
+        '`highlights` (3 concrete moments or observations, specific and personable). '
+        "Do not invent facts beyond the provided snippets."
     )
     user_content = (
         f"Period: {stats['period']}\n"
@@ -470,7 +558,7 @@ def _synthesize_recap(entries: List[Entry], stats: Dict) -> Tuple[str, List[str]
                 {"role": "system", "content": system_msg},
                 {"role": "user", "content": user_content},
             ],
-            temperature=0.5,
+            temperature=0.6,
         )
     except Exception:
         return (
@@ -480,14 +568,19 @@ def _synthesize_recap(entries: List[Entry], stats: Dict) -> Tuple[str, List[str]
         )
 
     content = resp.choices[0].message.content if resp.choices else ""
-    summary = content or "No recap generated."
+    if not content:
+        return "No recap generated.", [], []
 
-    themes: List[str] = []
-    highlights: List[str] = []
-    if summary:
+    try:
+        payload = json.loads(content)
+        summary = payload.get("summary") or "No recap generated."
+        themes = [t for t in payload.get("themes", []) if t]
+        highlights = [h for h in payload.get("highlights", []) if h]
+        return summary, themes, highlights
+    except Exception:
+        # Fallback to lenient parsing if model returns non-JSON text
+        summary = content or "No recap generated."
         parts = [p.strip("-• ").strip() for p in summary.split("\n") if p.strip()]
-        if len(parts) > 1:
-            themes = parts[: min(3, len(parts))]
-            highlights = parts[min(3, len(parts)) :]
-
-    return summary, themes, highlights
+        themes = parts[: min(3, len(parts))] if parts else []
+        highlights = parts[min(3, len(parts)) :] if len(parts) > 3 else []
+        return summary, themes, highlights

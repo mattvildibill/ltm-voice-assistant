@@ -2,80 +2,256 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Life Story Voice Journal</title>
+  <title>Life Story Voice Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0f0f0f;
-      --panel: #161616;
-      --muted: #b7b7b7;
-      --accent: #5b8def;
-      --accent-2: #6dd8b5;
-      --border: #242424;
+      --bg: #060910;
+      --bg-2: #0c1222;
+      --panel: #0f1729;
+      --panel-2: #131d33;
+      --muted: #9fb2d7;
+      --text: #eaf0ff;
+      --accent: #6cf0c2;
+      --accent-2: #7aa8ff;
+      --border: #1b2945;
+      --border-2: #203356;
+      --shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      --radius: 14px;
     }
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: #f5f5f5;
       margin: 0;
-      padding: 24px;
-      display: flex;
-      justify-content: center;
+      font-family: "Space Grotesk", "Helvetica Neue", sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(108, 240, 194, 0.05), transparent 32%),
+                  radial-gradient(circle at 80% 0%, rgba(122, 168, 255, 0.08), transparent 30%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 26px;
+      position: relative;
     }
-    .container { width: 100%; max-width: 1100px; }
-    h1 { margin: 0 0 6px; letter-spacing: 0.6px; }
-    p { color: var(--muted); }
-    .tabs { display: flex; gap: 10px; margin: 18px 0; flex-wrap: wrap; }
+
+    .page {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto 60px auto;
+    }
+
+    .bg-grid {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 50px 50px;
+      opacity: 0.4;
+      z-index: 0;
+    }
+
+    h1, h2, h3, h4 { margin: 0; letter-spacing: 0.4px; }
+    p { margin: 0; color: var(--muted); line-height: 1.6; }
+    .muted { color: var(--muted); }
+    .small { font-size: 14px; }
+    .eyebrow { text-transform: uppercase; letter-spacing: 1.6px; font-size: 12px; color: var(--accent-2); margin-bottom: 6px; }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: linear-gradient(140deg, rgba(16, 27, 53, 0.9), rgba(12, 16, 30, 0.95));
+      border-radius: 18px;
+      padding: 22px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-top {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid;
+      place-items: center;
+      color: #051021;
+      font-weight: 700;
+      letter-spacing: 1px;
+      box-shadow: 0 6px 30px rgba(108, 240, 194, 0.3);
+    }
+
+    .hero h1 { font-size: 28px; margin-bottom: 6px; }
+    .hero p { max-width: 840px; }
+
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: #e6ecff;
+      font-size: 13px;
+    }
+    .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(108, 240, 194, 0.12); }
+
+    .hero-panels {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .hero-card {
+      border: 1px solid var(--border);
+      background: rgba(12, 18, 34, 0.8);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .hero-card h4 { margin-bottom: 6px; font-size: 16px; }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 12px;
+      z-index: 5;
+      margin: 22px 0 14px;
+    }
     .tab-btn {
       padding: 12px 18px;
-      border-radius: 10px;
+      border-radius: 999px;
       border: 1px solid var(--border);
-      background: #1a1a1a;
-      color: #ddd;
+      background: rgba(255, 255, 255, 0.02);
+      color: #e2e9ff;
       cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 600;
+      letter-spacing: 0.2px;
     }
+    .tab-btn:hover { border-color: var(--border-2); }
     .tab-btn.active {
-      background: linear-gradient(135deg, #22304c, #1e283a);
-      border-color: #2e3d5b;
-      color: #fff;
+      background: linear-gradient(135deg, #12203a, #0e1c33);
+      border-color: var(--accent-2);
+      box-shadow: 0 6px 24px rgba(122, 168, 255, 0.2);
     }
+
     .tab-content { display: none; }
     .tab-content.active { display: block; }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 14px;
+    }
+    .capture-grid { grid-template-columns: 1.1fr 0.9fr; }
+    .insights-grid { grid-template-columns: 1.1fr 0.9fr; }
+
     .card {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius);
       padding: 16px;
-      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      position: relative;
     }
+    .card h2 { margin-bottom: 6px; }
+    .card h3 { margin: 0; }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .status-pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-2);
+      background: rgba(108, 240, 194, 0.08);
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 12px;
+    }
+
     button {
-      padding: 10px 16px;
-      border-radius: 8px;
+      padding: 11px 16px;
+      border-radius: 10px;
       border: 1px solid var(--border);
-      background: #222;
-      color: #fff;
+      background: rgba(255, 255, 255, 0.04);
+      color: #f8fbff;
       cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      transition: all 0.2s ease;
     }
-    button.primary { background: var(--accent); border-color: var(--accent); color: #0b1221; font-weight: 600; }
-    button[disabled] { opacity: 0.6; cursor: default; }
+    button:hover:not([disabled]) { border-color: var(--border-2); transform: translateY(-1px); }
+    button.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border-color: transparent;
+      color: #041023;
+      box-shadow: 0 8px 30px rgba(108, 240, 194, 0.25);
+    }
+    button[disabled] { opacity: 0.6; cursor: default; transform: none; box-shadow: none; }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 6px 0 10px;
+    }
+    .status-line { margin: 4px 0 10px; color: var(--muted); font-style: italic; }
     #log {
       white-space: pre-wrap;
-      margin-top: 10px;
       font-size: 14px;
-      background: #0f1218;
+      background: #0b101d;
       padding: 12px;
-      border-radius: 8px;
-      max-height: 220px;
+      border-radius: 12px;
+      max-height: 200px;
       overflow-y: auto;
-      border: 1px solid #1b2335;
+      border: 1px solid var(--border);
+      color: #cfdaf4;
     }
-    #status { margin-top: 6px; font-style: italic; color: var(--muted); }
-    .muted { color: var(--muted); }
+    .log-wrap { margin-top: 8px; }
+
+    .callouts { display: grid; gap: 8px; margin-top: 10px; }
+    .callout {
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed var(--border-2);
+      border-radius: 12px;
+      font-size: 14px;
+      color: #d5dffa;
+    }
+    .prompt-box {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px dashed var(--border-2);
+      background: rgba(108, 240, 194, 0.06);
+    }
+    .prompt-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .prompt-text { margin-top: 6px; color: #eaf4ff; line-height: 1.5; }
+
     .pill {
       display: inline-block;
-      padding: 4px 8px;
-      background: #1e2a3f;
-      border: 1px solid #273654;
-      color: #dfe6ff;
+      padding: 6px 10px;
+      background: rgba(122, 168, 255, 0.12);
+      border: 1px solid var(--border-2);
+      color: #e8edff;
       border-radius: 999px;
       margin: 0 6px 6px 0;
       font-size: 12px;
@@ -85,62 +261,105 @@
       padding: 4px 8px;
       border-radius: 8px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
+      border: 1px solid var(--border);
     }
-    .badge.positive { background: #183324; color: #7be3a6; border: 1px solid #2b5b40; }
-    .badge.neutral { background: #262626; color: #c7c7c7; border: 1px solid #3a3a3a; }
-    .badge.negative { background: #3a1e1e; color: #f39a9a; border: 1px solid #5a2c2c; }
+    .badge.positive { background: rgba(108, 240, 194, 0.12); color: var(--accent); border-color: rgba(108, 240, 194, 0.3); }
+    .badge.neutral { background: rgba(255, 255, 255, 0.04); color: #dbe6ff; border-color: var(--border); }
+    .badge.negative { background: rgba(255, 123, 123, 0.12); color: #ffb4b4; border-color: rgba(255, 123, 123, 0.3); }
+
     .entry-card {
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 12px;
-      background: #131313;
-      margin-bottom: 10px;
+      background: var(--panel-2);
+      margin-bottom: 12px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
     }
-    .entry-header { display: flex; justify-content: space-between; gap: 8px; }
-    .entry-body { margin-top: 8px; }
-    .entry-meta { font-size: 12px; color: var(--muted); }
-    .expand {
-      cursor: pointer;
-      color: var(--accent-2);
-      font-size: 13px;
-      margin-top: 6px;
-      display: inline-block;
-    }
+    .entry-header { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+    .entry-body { margin-top: 8px; color: #dbe6ff; }
+    .entry-meta { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .expand { cursor: pointer; color: var(--accent); font-size: 13px; margin-top: 6px; display: inline-block; }
+
+    .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 12px; }
+    .filter-btn { background: rgba(255, 255, 255, 0.03); }
+    .filter-btn.active { background: rgba(108, 240, 194, 0.16); color: #042013; border-color: var(--accent); box-shadow: 0 6px 18px rgba(108, 240, 194, 0.2); }
+
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 10px; margin: 10px 0; }
+    .stat { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .stat strong { display: block; margin-bottom: 4px; }
+    .chart { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .sparkline { width: 100%; height: 90px; background: #0f1524; border: 1px solid var(--border-2); border-radius: 12px; padding: 8px; }
+    .recap-card { border: 1px solid var(--border-2); border-radius: 12px; padding: 12px; background: rgba(122, 168, 255, 0.06); margin-top: 10px; }
+
     .chat-pane {
-      background: #0f1218;
-      border: 1px solid #1f2437;
-      border-radius: 10px;
+      background: #0d1220;
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 12px;
-      max-height: 320px;
+      max-height: 360px;
+      min-height: 280px;
       overflow-y: auto;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
     }
     .bubble {
-      max-width: 80%;
+      max-width: 90%;
       padding: 10px 12px;
       border-radius: 12px;
       margin: 8px 0;
-      line-height: 1.4;
+      line-height: 1.5;
+      font-size: 15px;
+      position: relative;
     }
-    .bubble.user { background: #203459; margin-left: auto; color: #e8f1ff; }
-    .bubble.assistant { background: #1a1a1a; border: 1px solid #222; color: #e4e4e4; }
-    .bubble-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .bubble.user { background: linear-gradient(135deg, #12243f, #0f1f34); margin-left: auto; color: #e8f1ff; }
+    .bubble.assistant { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); color: #e4eaf5; }
+    .bubble-meta { font-size: 12px; color: var(--muted); margin-top: -2px; margin-bottom: 10px; }
     .chat-input { display: flex; gap: 10px; margin-top: 10px; }
-    .chat-input textarea { flex: 1; min-height: 70px; background: #121212; color: #eee; border: 1px solid #222; border-radius: 8px; padding: 8px; }
-    .chart { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-    .sparkline { width: 100%; height: 90px; background: #11131a; border: 1px solid #1e2638; border-radius: 8px; padding: 8px; }
-    .recap-card { border: 1px solid #1f2c44; border-radius: 10px; padding: 12px; background: #0f1218; margin-top: 10px; }
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 10px; margin-top: 8px; }
-    .stat { background:#0f1218; border:1px solid #1f2437; border-radius:8px; padding:10px; }
-    .filter-btn.active { background: var(--accent); color: #0b1221; border-color: var(--accent); }
+    .chat-input textarea { flex: 1; min-height: 80px; background: #0c1325; color: #eaefff; border: 1px solid var(--border); border-radius: 10px; padding: 10px; resize: vertical; }
+
     textarea { width: 100%; }
     .hidden { display: none; }
+
+    @media (max-width: 900px) {
+      body { padding: 18px; }
+      .capture-grid, .insights-grid { grid-template-columns: 1fr; }
+      .chat-pane { min-height: 220px; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Life Story Voice Assistant</h1>
-    <p>Capture memories, browse your timeline, and chat with insights grounded in your entries.</p>
+  <div class="bg-grid"></div>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-top">
+        <div class="brand-mark">LS</div>
+        <div>
+          <div class="eyebrow">Life Story Voice Assistant</div>
+          <h1>Voice-led journaling built for retrieval-grounded chat</h1>
+          <p>Capture stories in seconds, keep an auditable timeline, and ask questions answered using only the entries you have stored.</p>
+        </div>
+      </div>
+      <div class="chip-row">
+        <span class="chip"><span class="dot"></span> Records & transcribes audio</span>
+        <span class="chip">Summaries, sentiment, topics & people/places</span>
+        <span class="chip">Local API at http://localhost:8000</span>
+        <span class="chip">Retrieval-grounded chat + weekly recap</span>
+      </div>
+      <div class="hero-panels">
+        <div class="hero-card">
+          <h4>Capture workflow</h4>
+          <p>Start/stop recording, auto-upload to the backend, and keep the log visible so you always know what happened.</p>
+        </div>
+        <div class="hero-card">
+          <h4>Timeline filters</h4>
+          <p>Browse entries by last 7 days, 30 days, or all time with sentiment, topics, and expandable detail.</p>
+        </div>
+        <div class="hero-card">
+          <h4>Insights & chat</h4>
+          <p>View basic stats, see recency trends, and chat with an assistant that cites the entries it used.</p>
+        </div>
+      </div>
+    </section>
 
     <div class="tabs">
       <button class="tab-btn active" data-tab="capture">Capture</button>
@@ -150,25 +369,67 @@
 
     <!-- Capture Tab -->
     <section id="capture" class="tab-content active">
-      <div class="card">
-        <h2>Record / Upload entry</h2>
-        <p class="muted">Click <strong>Start Recording</strong>, tell a story, then click <strong>Stop &amp; Save</strong>. Audio is transcribed, analyzed, and stored.</p>
-        <button id="startBtn" class="primary">🎤 Start Recording</button>
-        <button id="stopBtn" disabled>🛑 Stop &amp; Save</button>
-        <div id="status">Not recording.</div>
-        <div id="log"></div>
-      </div>
-      <div class="card">
-        <h3>Recent entries</h3>
-        <div id="recentEntries" class="muted">Loading…</div>
+      <div class="section-grid capture-grid">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="eyebrow">Voice to memory</div>
+              <h2>Record or upload an entry</h2>
+              <p>Click start, tell your story, then save. Audio is transcribed, summarized, and stored with sentiment and topics.</p>
+            </div>
+            <div class="status-pill">Live capture</div>
+          </div>
+          <div class="controls">
+            <button id="startBtn" class="primary">🎤 Start Recording</button>
+            <button id="stopBtn">🛑 Stop &amp; Save</button>
+          </div>
+          <div id="status" class="status-line">Not recording.</div>
+          <div class="log-wrap">
+            <div class="small muted" style="margin-bottom:6px;">Activity log</div>
+            <div id="log"></div>
+          </div>
+          <div class="callouts">
+            <div class="callout">Uploads to <code>http://localhost:8000/entries</code> and refreshes your timeline automatically.</div>
+            <div class="callout">Summaries, topics, and people/places are displayed in the timeline cards.</div>
+            <div class="callout">Use the Insights tab for stats, weekly recaps, and retrieval-grounded chat.</div>
+          </div>
+          <div class="prompt-box">
+            <div class="prompt-header">
+              <div>
+                <div class="eyebrow" style="margin-bottom:2px;">Need a prompt?</div>
+                <div class="small muted">Ask for a tailored question, then answer it by recording or via chat.</div>
+              </div>
+              <div class="controls" style="margin:0;">
+                <button id="promptBtn" class="primary">Request a prompt</button>
+                <button id="promptUseBtn">Send to chat</button>
+              </div>
+            </div>
+            <div id="promptText" class="prompt-text muted">Press “Request a prompt” to generate a personal question based on your recent entries.</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="eyebrow">Latest saves</div>
+              <h3>Recent entries</h3>
+            </div>
+          </div>
+          <div id="recentEntries" class="muted">Loading…</div>
+        </div>
       </div>
     </section>
 
     <!-- Timeline Tab -->
     <section id="timeline" class="tab-content">
       <div class="card">
-        <h2>Browse your timeline</h2>
-        <div style="margin-bottom:10px;">
+        <div class="card-header">
+          <div>
+            <div class="eyebrow">Browse</div>
+            <h2>Timeline</h2>
+            <p class="small">Filter by recency to scan summaries, sentiment, topics, and full text in one view.</p>
+          </div>
+        </div>
+        <div class="filter-row">
           <button class="filter-btn" data-range="7" id="filter7">Last 7 days</button>
           <button class="filter-btn" data-range="30" id="filter30">Last 30 days</button>
           <button class="filter-btn active" data-range="all" id="filterAll">All time</button>
@@ -180,31 +441,51 @@
 
     <!-- Insights & Chat Tab -->
     <section id="insights" class="tab-content">
-      <div class="card">
-        <h2>Insights</h2>
-        <div id="summaryText" class="muted">Loading stats…</div>
-        <div class="stat-grid">
-          <div class="stat" id="statEntries"></div>
-          <div class="stat" id="statWords"></div>
-          <div class="stat" id="statAvg"></div>
+      <div class="section-grid insights-grid">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="eyebrow">Summary &amp; trends</div>
+              <h2>Insights</h2>
+            </div>
+          </div>
+          <p id="summaryText" class="muted">Loading stats…</p>
+          <div class="stat-grid">
+            <div class="stat" id="statEntries"></div>
+            <div class="stat" id="statWords"></div>
+            <div class="stat" id="statAvg"></div>
+          </div>
+          <div id="entriesChart" class="chart"></div>
+          <div class="recap-card">
+            <div class="card-header" style="margin-bottom:4px;">
+              <div>
+                <div class="eyebrow">Weekly pulse</div>
+                <h3 style="margin:0;">Generate recap</h3>
+              </div>
+              <button id="weeklyQuickBtn" class="primary">Generate</button>
+            </div>
+            <div id="weeklyQuickStatus" class="muted small"></div>
+            <div id="weeklyQuickResult" class="recap-card hidden" style="margin:0;"></div>
+          </div>
         </div>
-        <div id="entriesChart" class="chart"></div>
-        <button id="weeklyQuickBtn" class="primary" style="margin-top:8px;">Generate weekly recap</button>
-        <div id="weeklyQuickStatus" class="muted"></div>
-        <div id="weeklyQuickResult" class="recap-card hidden"></div>
-      </div>
-      <div class="card">
-        <h2>Chat with your memories</h2>
-        <p class="muted">The assistant answers using only your stored entries.</p>
-        <div id="chatPane" class="chat-pane"></div>
-        <div class="chat-input">
-          <textarea id="chatInput" placeholder="Ask something..."></textarea>
-          <button id="chatSendBtn" class="primary">Send</button>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="eyebrow">Retrieval-grounded chat</div>
+              <h2>Chat with your memories</h2>
+              <p class="small muted">The assistant answers using only your stored entries and shows how many it used.</p>
+            </div>
+          </div>
+          <div id="chatPane" class="chat-pane"></div>
+          <div class="chat-input">
+            <textarea id="chatInput" placeholder="Ask something about your memories..."></textarea>
+            <button id="chatSendBtn" class="primary">Send</button>
+          </div>
+          <div class="muted small" id="chatStatus"></div>
         </div>
-        <div class="muted" id="chatStatus"></div>
       </div>
     </section>
-  </div>
+  </main>
 
   <script>
     const startBtn = document.getElementById("startBtn");
@@ -228,6 +509,9 @@
     const chatInput = document.getElementById("chatInput");
     const chatSendBtn = document.getElementById("chatSendBtn");
     const chatStatus = document.getElementById("chatStatus");
+    const promptBtn = document.getElementById("promptBtn");
+    const promptUseBtn = document.getElementById("promptUseBtn");
+    const promptText = document.getElementById("promptText");
 
     const filter7 = document.getElementById("filter7");
     const filter30 = document.getElementById("filter30");
@@ -438,9 +722,9 @@
       }
       const { total_entries, total_words, average_word_count, entries_per_day } = data;
       summaryText.textContent = "Your entries at a glance:";
-      statEntries.textContent = `Entries: ${total_entries}`;
-      statWords.textContent = `Total words: ${total_words}`;
-      statAvg.textContent = `Avg words/entry: ${average_word_count.toFixed(1)}`;
+      statEntries.innerHTML = `<strong>Entries</strong>${total_entries}`;
+      statWords.innerHTML = `<strong>Total words</strong>${total_words}`;
+      statAvg.innerHTML = `<strong>Avg words/entry</strong>${average_word_count.toFixed(1)}`;
 
       entriesChart.innerHTML = "";
       const spark = renderSparkline(entries_per_day || []);
@@ -471,19 +755,19 @@
 
       const pathD = svgParts.map((pt, i) => `${i === 0 ? "M" : "L"}${pt.x},${pt.y}`).join(" ");
       const circles = svgParts
-        .map((pt) => `<circle cx="${pt.x}" cy="${pt.y}" r="3" fill="${pt.count === maxCount ? "#6dd8b5" : "#5b8def"}"><title>${pt.date}: ${pt.count}</title></circle>`)
+        .map((pt) => `<circle cx="${pt.x}" cy="${pt.y}" r="3" fill="${pt.count === maxCount ? "#6cf0c2" : "#7aa8ff"}"><title>${pt.date}: ${pt.count}</title></circle>`)
         .join("");
 
       wrap.innerHTML = `
         <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="width:100%;height:60px;">
-          <path d="${pathD}" fill="none" stroke="url(#grad)" stroke-width="2" />
-          ${circles}
           <defs>
             <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#5b8def" />
-              <stop offset="100%" stop-color="#6dd8b5" />
+              <stop offset="0%" stop-color="#7aa8ff" />
+              <stop offset="100%" stop-color="#6cf0c2" />
             </linearGradient>
           </defs>
+          <path d="${pathD}" fill="none" stroke="url(#grad)" stroke-width="2" />
+          ${circles}
         </svg>
         <div class="muted" style="font-size:12px;margin-top:4px;">Last ${recent.length} days • Peak: ${maxCount} entr${maxCount === 1 ? "y" : "ies"} in a day</div>
       `;
@@ -498,12 +782,20 @@
       weeklyQuickBtn.disabled = true;
       try {
         const resp = await fetch("http://localhost:8000/insights/weekly");
+        if (resp.status === 404) {
+          weeklyQuickStatus.textContent = "Add at least one entry in the last 7 days to get a recap.";
+          return;
+        }
         if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
         const data = await resp.json();
+        const themes = (data.themes || []).map((t) => `<span class="pill">${t}</span>`).join("") || '<span class="muted small">—</span>';
+        const highlights = (data.highlights || []).map((h) => `<div>• ${h}</div>`).join("") || '<span class="muted small">—</span>';
         weeklyQuickResult.classList.remove("hidden");
         weeklyQuickResult.innerHTML = `
-          <div class="muted">Entries: ${data.total_entries ?? "—"} • Avg sentiment: ${data.average_sentiment ?? "—"}</div>
-          <div><strong>Summary:</strong> ${data.summary || "—"}</div>
+          <div class="muted small">Entries: ${data.total_entries ?? "—"} • Avg sentiment: ${data.average_sentiment ?? "—"}</div>
+          <div style="margin-top:6px;"><strong>Summary:</strong> ${data.summary || "—"}</div>
+          <div style="margin-top:6px;"><strong>Themes:</strong> ${themes}</div>
+          <div style="margin-top:6px;"><strong>Highlights:</strong> ${highlights}</div>
           <div style="margin-top:6px;"><strong>Top topics:</strong> ${(data.top_topics || []).join(", ") || "—"}</div>
         `;
         weeklyQuickStatus.textContent = "";
@@ -515,6 +807,39 @@
       }
     }
     weeklyQuickBtn.addEventListener("click", generateWeeklyQuick);
+
+    // --- Prompt suggestion ---
+    async function requestPrompt() {
+      promptText.textContent = "Generating a personal prompt...";
+      promptText.classList.remove("muted");
+      promptBtn.disabled = true;
+      promptUseBtn.disabled = true;
+      try {
+        const resp = await fetch("http://localhost:8000/insights/prompt");
+        if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
+        const data = await resp.json();
+        promptText.textContent = data.prompt || "No prompt generated.";
+        chatInput.value = data.prompt || chatInput.value;
+        chatStatus.textContent = data.note || "Prompt ready — record or send via chat.";
+      } catch (err) {
+        promptText.textContent = `Unable to get a prompt: ${err.message}`;
+      } finally {
+        promptBtn.disabled = false;
+        promptUseBtn.disabled = false;
+      }
+    }
+    function usePromptInChat() {
+      const text = promptText.textContent.trim();
+      if (!text || text.startsWith("Press")) {
+        chatStatus.textContent = "Generate a prompt first.";
+        return;
+      }
+      chatInput.value = text;
+      chatInput.focus();
+      chatStatus.textContent = "Prompt loaded into chat. Edit and send when ready.";
+    }
+    promptBtn.addEventListener("click", requestPrompt);
+    promptUseBtn.addEventListener("click", usePromptInChat);
 
     // --- Chat ---
     async function sendConversationMessage() {
