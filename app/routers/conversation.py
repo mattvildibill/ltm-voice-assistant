@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
+from app.core.auth import get_current_user_id
 from app.db.database import get_session
 from app.models.entry import Entry
 from app.services.retrieval_scoring import rerank_entries
@@ -28,7 +29,7 @@ class ConversationResponse(BaseModel):
 
 
 # Simple in-memory conversation state (single-user use case)
-conversation_state: Dict[str, List[ConversationTurn]] = {"messages": []}
+conversation_state: Dict[str, List[ConversationTurn]] = {}
 MAX_HISTORY = 20
 
 
@@ -40,7 +41,9 @@ def get_db_session():
 
 @router.post("/respond", response_model=ConversationResponse)
 async def conversation_respond(
-    payload: ConversationRequest, session: Session = Depends(get_db_session)
+    payload: ConversationRequest,
+    session: Session = Depends(get_db_session),
+    user_id: str = Depends(get_current_user_id),
 ):
     """
     Chat with stored entries using embeddings to retrieve context.
@@ -55,7 +58,7 @@ async def conversation_respond(
     if not user_message:
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
 
-    entries = _fetch_similar_entries(user_message, session, top_k=6)
+    entries = _fetch_similar_entries(user_message, session, user_id=user_id, top_k=6)
     if not entries:
         raise HTTPException(
             status_code=404, detail="No entries available for conversation yet."
@@ -106,24 +109,31 @@ async def conversation_respond(
         reply = "I could not generate a response from your stored entries."
 
     # Update in-memory state as a single-user cache
-    conversation_state["messages"] = (conversation_state["messages"] + messages_in)[
-        -MAX_HISTORY:
-    ]
-    conversation_state["messages"].append(ConversationTurn(role="assistant", content=reply))
-    conversation_state["messages"] = conversation_state["messages"][-MAX_HISTORY:]
+    history = conversation_state.get(user_id, [])
+    history = (history + messages_in)[-MAX_HISTORY:]
+    history.append(ConversationTurn(role="assistant", content=reply))
+    conversation_state[user_id] = history[-MAX_HISTORY:]
 
     return ConversationResponse(response=reply, used_entry_ids=used_ids)
 
 
 def _fetch_similar_entries(
-    question: str, session: Session, top_k: int = 5
+    question: str,
+    session: Session,
+    user_id: str,
+    top_k: int = 5,
 ) -> List[Entry]:
     """
     Candidate generation (top-50 similarity) followed by reranking with context-aware scoring.
     Falls back to recency if embeddings are missing.
     """
-    entries = session.exec(select(Entry)).all()
+    entries = session.exec(select(Entry).where(Entry.user_id == user_id)).all()
     result = rerank_entries(question, entries, top_n=top_k, candidate_k=50, debug=False)
     if result.entries:
         return result.entries
-    return session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(top_k)).all()
+    return session.exec(
+        select(Entry)
+        .where(Entry.user_id == user_id)
+        .order_by(Entry.created_at.desc())
+        .limit(top_k)
+    ).all()

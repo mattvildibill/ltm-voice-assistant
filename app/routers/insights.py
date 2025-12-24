@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
+from app.core.auth import get_current_user_id
 from app.db.database import get_session
 from app.models.entry import Entry
 from app.services.openai_service import client
@@ -115,12 +116,19 @@ class PromptResponse(BaseModel):
 
 
 @router.get("/entries", response_model=List[EntryPreview])
-def list_entries(session: Session = Depends(get_db_session)):
+def list_entries(
+    session: Session = Depends(get_db_session),
+    user_id: str = Depends(get_current_user_id),
+):
     """
     Return entry previews for the Insights tab.
     JSON: [{"id":1,"created_at":"ISO","preview":"text","summary":"...","topics":[],"emotions":[],"word_count":0}]
     """
-    entries = session.exec(select(Entry).order_by(Entry.created_at.desc())).all()
+    entries = session.exec(
+        select(Entry)
+        .where(Entry.user_id == user_id)
+        .order_by(Entry.created_at.desc())
+    ).all()
 
     previews: List[EntryPreview] = []
     for entry in entries:
@@ -155,12 +163,15 @@ def list_entries(session: Session = Depends(get_db_session)):
 
 
 @router.get("/summary", response_model=InsightsSummary)
-def get_summary(session: Session = Depends(get_db_session)):
+def get_summary(
+    session: Session = Depends(get_db_session),
+    user_id: str = Depends(get_current_user_id),
+):
     """
     Basic aggregate stats.
     JSON: {"total_entries":0,"total_words":0,"average_word_count":0,"entries_per_day":[...]}
     """
-    entries = session.exec(select(Entry)).all()
+    entries = session.exec(select(Entry).where(Entry.user_id == user_id)).all()
     total_entries = len(entries)
     total_words = sum(_entry_word_count(entry) for entry in entries)
     average_word_count = (total_words / total_entries) if total_entries else 0
@@ -201,7 +212,9 @@ def get_summary(session: Session = Depends(get_db_session)):
 
 @router.post("/query", response_model=InsightsQueryResponse)
 async def query_insights(
-    payload: InsightsQueryRequest, session: Session = Depends(get_db_session)
+    payload: InsightsQueryRequest,
+    session: Session = Depends(get_db_session),
+    user_id: str = Depends(get_current_user_id),
 ):
     """
     Answer a user question grounded in stored entries using semantic search.
@@ -211,7 +224,9 @@ async def query_insights(
     if not question:
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
-    fetched = _fetch_similar_entries(question, session, top_k=6, debug=payload.debug)
+    fetched = _fetch_similar_entries(
+        question, session, user_id=user_id, top_k=6, debug=payload.debug
+    )
     if isinstance(fetched, tuple):
         entries, debug_data = fetched
     else:
@@ -285,22 +300,36 @@ async def query_insights(
 
 
 @router.get("/weekly", response_model=RecapResponse)
-def weekly_recap(session: Session = Depends(get_db_session)):
-    return _build_recap(period="weekly", days=7, session=session)
+def weekly_recap(
+    session: Session = Depends(get_db_session),
+    user_id: str = Depends(get_current_user_id),
+):
+    return _build_recap(period="weekly", days=7, session=session, user_id=user_id)
 
 
 @router.get("/monthly", response_model=RecapResponse)
-def monthly_recap(session: Session = Depends(get_db_session)):
-    return _build_recap(period="monthly", days=30, session=session)
+def monthly_recap(
+    session: Session = Depends(get_db_session),
+    user_id: str = Depends(get_current_user_id),
+):
+    return _build_recap(period="monthly", days=30, session=session, user_id=user_id)
 
 
 @router.get("/prompt", response_model=PromptResponse)
-def generate_prompt(session: Session = Depends(get_db_session)):
+def generate_prompt(
+    session: Session = Depends(get_db_session),
+    user_id: str = Depends(get_current_user_id),
+):
     """
     Generate a writing/chat prompt tailored to recent entries (topics, people, places).
     Falls back to a generic idea if no entries or OpenAI is unavailable.
     """
-    entries = session.exec(select(Entry).order_by(Entry.created_at.desc()).limit(20)).all()
+    entries = session.exec(
+        select(Entry)
+        .where(Entry.user_id == user_id)
+        .order_by(Entry.created_at.desc())
+        .limit(20)
+    ).all()
     if not entries:
         return PromptResponse(
             prompt="Think back on this week: what moment surprised you and how did it change your mood or plans?",
@@ -403,26 +432,37 @@ def _entry_word_count(entry: Entry) -> int:
 
 
 def _fetch_similar_entries(
-    question: str, session: Session, top_k: int = 5, debug: bool = False
+    question: str,
+    session: Session,
+    user_id: str,
+    top_k: int = 5,
+    debug: bool = False,
 ) -> Union[List[Entry], Tuple[List[Entry], Optional[List[Dict]]]]:
     """
     Candidate generation (top-50 similarity) followed by reranking with context-aware scoring.
     Returns entries, and debug metadata if requested.
     """
-    all_entries = session.exec(select(Entry)).all()
+    all_entries = session.exec(select(Entry).where(Entry.user_id == user_id)).all()
     result = rerank_entries(question, all_entries, top_n=top_k, candidate_k=50, debug=debug)
     if debug:
         return result.entries, result.debug
     return result.entries
 
 
-def _build_recap(period: str, days: int, session: Session) -> RecapResponse:
+def _build_recap(
+    period: str,
+    days: int,
+    session: Session,
+    user_id: str,
+) -> RecapResponse:
     """
     Build weekly/monthly recaps: gather stats locally, then synthesize summary via OpenAI.
     """
     cutoff = datetime.utcnow() - timedelta(days=days)
     entries = session.exec(
-        select(Entry).where(Entry.created_at >= cutoff).order_by(Entry.created_at)
+        select(Entry)
+        .where(Entry.created_at >= cutoff, Entry.user_id == user_id)
+        .order_by(Entry.created_at)
     ).all()
 
     if not entries:
