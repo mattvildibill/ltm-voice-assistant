@@ -6,11 +6,13 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.error_handlers import add_exception_handlers
+from app.core.config import settings
 from app.routers.entries import router as entries_router
 from app.routers.health import router as health_router
 from app.routers.prompts import router as prompts_router
 from app.routers.insights import router as insights_router
 from app.routers.conversation import router as conversation_router
+from app.routers.auth import router as auth_router
 from app.db.database import init_db, migrate_db
 
 app = FastAPI()
@@ -24,10 +26,19 @@ migrate_db()
 
 add_exception_handlers(app)
 
+if settings.allowed_origins:
+    allowed_origins = [
+        origin.strip()
+        for origin in settings.allowed_origins.split(",")
+        if origin.strip()
+    ]
+else:
+    allowed_origins = ["*"] if settings.environment == "development" else []
+
 # ⭐ ABSOLUTE REQUIRED CORS ⭐
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],           # allow everything during dev
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,6 +50,7 @@ app.include_router(health_router)
 app.include_router(prompts_router)
 app.include_router(insights_router)
 app.include_router(conversation_router)
+app.include_router(auth_router)
 
 # Serve the static UI so hitting "/" doesn't 404
 if FRONTEND_DIR.exists():

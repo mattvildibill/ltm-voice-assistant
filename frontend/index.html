@@ -59,17 +59,69 @@
     .small { font-size: 14px; }
     .eyebrow { text-transform: uppercase; letter-spacing: 1.6px; font-size: 12px; color: var(--accent-2); margin-bottom: 6px; }
 
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 6;
+      backdrop-filter: blur(12px);
+    }
+    .top-bar .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+    }
+    .nav-links a:hover {
+      color: var(--text);
+      border-color: var(--border);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .nav-cta {
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #041023;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
     .hero {
       position: relative;
       overflow: hidden;
       border: 1px solid var(--border);
       background: linear-gradient(140deg, rgba(16, 27, 53, 0.9), rgba(12, 16, 30, 0.95));
       border-radius: 18px;
-      padding: 22px;
+      padding: 26px;
       margin-bottom: 18px;
       box-shadow: var(--shadow);
     }
 
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }
     .hero-top {
       display: flex;
       gap: 14px;
@@ -90,8 +142,38 @@
       box-shadow: 0 6px 30px rgba(108, 240, 194, 0.3);
     }
 
-    .hero h1 { font-size: 28px; margin-bottom: 6px; }
+    .hero h1 { font-size: 30px; margin-bottom: 6px; }
     .hero p { max-width: 840px; }
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .hero-actions a {
+      text-decoration: none;
+    }
+    .hero-actions .secondary {
+      border: 1px solid var(--border-2);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hero-actions .primary-link {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #041023;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
 
     .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
     .chip {
@@ -217,6 +299,15 @@
       font-weight: 600;
       letter-spacing: 0.2px;
     }
+    .auth-card {
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 14px;
+      background: rgba(8, 14, 26, 0.8);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+    .auth-card .user-input { margin-bottom: 8px; }
+    .auth-card .controls { justify-content: space-between; }
 
     .controls {
       display: flex;
@@ -302,6 +393,29 @@
     .chart { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
     .sparkline { width: 100%; height: 90px; background: #0f1524; border: 1px solid var(--border-2); border-radius: 12px; padding: 8px; }
     .recap-card { border: 1px solid var(--border-2); border-radius: 12px; padding: 12px; background: rgba(122, 168, 255, 0.06); margin-top: 10px; }
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .section-note {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 18px 0;
+      opacity: 0.6;
+    }
+    footer {
+      margin-top: 32px;
+      padding: 24px 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
 
     .chat-pane {
       background: #0d1220;
@@ -333,7 +447,9 @@
 
     @media (max-width: 900px) {
       body { padding: 18px; }
+      .top-bar { position: static; }
       .capture-grid, .insights-grid { grid-template-columns: 1fr; }
+      .hero-grid { grid-template-columns: 1fr; }
       .chat-pane { min-height: 220px; }
     }
   </style>
@@ -341,38 +457,76 @@
 <body>
   <div class="bg-grid"></div>
   <main class="page">
-    <section class="hero">
-      <div class="hero-top">
+    <header class="top-bar">
+      <div class="brand">
         <div class="brand-mark">LS</div>
-        <div style="flex: 1;">
-          <div class="eyebrow">Life Story Voice Assistant</div>
-          <h1>Voice-led journaling built for retrieval-grounded chat</h1>
-          <p>Capture stories in seconds, keep an auditable timeline, and ask questions answered using only the entries you have stored.</p>
-        </div>
-        <div style="min-width: 220px;">
-          <div class="eyebrow">Active User</div>
-          <input id="userIdInput" class="user-input" type="text" placeholder="default-user" />
-          <div class="muted small" style="margin-top: 6px;">Used to scope entries.</div>
-        </div>
+        <span>Life Story</span>
       </div>
-      <div class="chip-row">
-        <span class="chip"><span class="dot"></span> Records & transcribes audio</span>
-        <span class="chip">Summaries, sentiment, topics & people/places</span>
-        <span class="chip">Local API at http://localhost:8000</span>
-        <span class="chip">Retrieval-grounded chat + weekly recap</span>
-      </div>
-      <div class="hero-panels">
-        <div class="hero-card">
-          <h4>Capture workflow</h4>
-          <p>Start/stop recording, auto-upload to the backend, and keep the log visible so you always know what happened.</p>
+      <nav class="nav-links">
+        <a href="#capture">Capture</a>
+        <a href="#timeline">Timeline</a>
+        <a href="#insights">Insights</a>
+        <a href="#privacy">Privacy</a>
+        <a class="nav-cta" href="#capture">Start journaling</a>
+      </nav>
+    </header>
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <div class="hero-top">
+            <div class="brand-mark">LS</div>
+            <div>
+              <div class="eyebrow">Life Story Voice Assistant</div>
+              <h1>Your private memory companion, now ready for everyday use</h1>
+              <p>Capture stories in seconds, keep an auditable timeline, and ask questions answered using only the entries you’ve stored.</p>
+              <div class="hero-actions">
+                <a class="primary-link" href="#capture">Start your first entry</a>
+                <a class="secondary" href="#insights">View insights</a>
+              </div>
+            </div>
+          </div>
+          <div class="chip-row">
+            <span class="chip"><span class="dot"></span> Records & transcribes audio</span>
+            <span class="chip">Summaries, sentiment, topics & people/places</span>
+            <span class="chip">Account-secured memory vault</span>
+            <span class="chip">Retrieval-grounded chat + weekly recap</span>
+          </div>
+          <div class="hero-panels">
+            <div class="hero-card">
+              <h4>Capture workflow</h4>
+              <p>Start/stop recording, auto-upload to the backend, and keep the log visible so you always know what happened.</p>
+            </div>
+            <div class="hero-card">
+              <h4>Timeline filters</h4>
+              <p>Browse entries by last 7 days, 30 days, or all time with sentiment, topics, and expandable detail.</p>
+            </div>
+            <div class="hero-card">
+              <h4>Insights & chat</h4>
+              <p>View basic stats, see recency trends, and chat with an assistant that cites the entries it used.</p>
+            </div>
+          </div>
         </div>
-        <div class="hero-card">
-          <h4>Timeline filters</h4>
-          <p>Browse entries by last 7 days, 30 days, or all time with sentiment, topics, and expandable detail.</p>
-        </div>
-        <div class="hero-card">
-          <h4>Insights & chat</h4>
-          <p>View basic stats, see recency trends, and chat with an assistant that cites the entries it used.</p>
+        <div>
+          <div class="eyebrow">Account</div>
+          <div class="auth-card">
+            <input id="authEmail" class="user-input" type="email" placeholder="email@domain.com" />
+            <input id="authPassword" class="user-input" type="password" placeholder="password (min 8 chars)" />
+            <div class="controls" style="margin-top: 8px;">
+              <button id="signupBtn" class="primary">Sign up</button>
+              <button id="loginBtn">Log in</button>
+              <button id="logoutBtn">Log out</button>
+            </div>
+            <div id="authStatus" class="muted small" style="margin-top: 6px;">Create an account or log in to sync your memories.</div>
+          </div>
+          <div class="divider"></div>
+          <div class="hero-card">
+            <h4>Privacy-first by default</h4>
+            <p>Your entries are scoped to your account. We only answer using the memories you’ve stored.</p>
+          </div>
+          <div class="hero-card" style="margin-top: 10px;">
+            <h4>Quick start checklist</h4>
+            <p>1. Sign up • 2. Record a memory • 3. Ask the chat a question • 4. Review your weekly recap</p>
+          </div>
         </div>
       </div>
     </section>
@@ -388,10 +542,13 @@
       <div class="section-grid capture-grid">
         <div class="card">
           <div class="card-header">
-            <div>
+            <div class="section-title">
+              <div>
               <div class="eyebrow">Voice to memory</div>
               <h2>Record or upload an entry</h2>
               <p>Click start, tell your story, then save. Audio is transcribed, summarized, and stored with sentiment and topics.</p>
+              </div>
+              <div class="section-note">Securely saved to your account</div>
             </div>
             <div class="status-pill">Live capture</div>
           </div>
@@ -405,7 +562,7 @@
             <div id="log"></div>
           </div>
           <div class="callouts">
-            <div class="callout">Uploads to <code>http://localhost:8000/entries</code> and refreshes your timeline automatically.</div>
+            <div class="callout">Uploads to <code>/entries</code> (or your configured API base) and refreshes your timeline automatically.</div>
             <div class="callout">Summaries, topics, and people/places are displayed in the timeline cards.</div>
             <div class="callout">Use the Insights tab for stats, weekly recaps, and retrieval-grounded chat.</div>
           </div>
@@ -425,9 +582,12 @@
         </div>
         <div class="card">
           <div class="card-header">
-            <div>
+            <div class="section-title">
+              <div>
               <div class="eyebrow">Latest saves</div>
               <h3>Recent entries</h3>
+              </div>
+              <div class="section-note">Synced across sessions</div>
             </div>
           </div>
           <div id="recentEntries" class="muted">Loading…</div>
@@ -439,10 +599,13 @@
     <section id="timeline" class="tab-content">
       <div class="card">
         <div class="card-header">
-          <div>
+          <div class="section-title">
+            <div>
             <div class="eyebrow">Browse</div>
             <h2>Timeline</h2>
             <p class="small">Filter by recency to scan summaries, sentiment, topics, and full text in one view.</p>
+            </div>
+            <div class="section-note">Searchable memory history</div>
           </div>
         </div>
         <div class="filter-row">
@@ -460,9 +623,12 @@
       <div class="section-grid insights-grid">
         <div class="card">
           <div class="card-header">
-            <div>
+            <div class="section-title">
+              <div>
               <div class="eyebrow">Summary &amp; trends</div>
               <h2>Insights</h2>
+              </div>
+              <div class="section-note">Weekly and monthly rollups</div>
             </div>
           </div>
           <p id="summaryText" class="muted">Loading stats…</p>
@@ -486,10 +652,13 @@
         </div>
         <div class="card">
           <div class="card-header">
-            <div>
+            <div class="section-title">
+              <div>
               <div class="eyebrow">Retrieval-grounded chat</div>
               <h2>Chat with your memories</h2>
               <p class="small muted">The assistant answers using only your stored entries and shows how many it used.</p>
+              </div>
+              <div class="section-note">Grounded answers only</div>
             </div>
           </div>
           <div id="chatPane" class="chat-pane"></div>
@@ -502,6 +671,10 @@
       </div>
     </section>
   </main>
+  <footer id="privacy">
+    <div>Private by design • Account-scoped memories • You control what you save</div>
+    <div style="margin-top:6px;">Life Story Voice Assistant © 2025</div>
+  </footer>
 
   <script>
     const startBtn = document.getElementById("startBtn");
@@ -538,22 +711,43 @@
     let conversationHistory = [];
     let entriesCache = [];
     let summaryCache = null;
-    const userIdInput = document.getElementById("userIdInput");
-    const USER_ID_STORAGE_KEY = "ltm-user-id";
+    const authEmail = document.getElementById("authEmail");
+    const authPassword = document.getElementById("authPassword");
+    const signupBtn = document.getElementById("signupBtn");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const authStatus = document.getElementById("authStatus");
 
-    const savedUserId = localStorage.getItem(USER_ID_STORAGE_KEY);
-    if (savedUserId) {
-      userIdInput.value = savedUserId;
+    const AUTH_TOKEN_KEY = "ltm-auth-token";
+    const AUTH_EMAIL_KEY = "ltm-auth-email";
+    const API_BASE = window.LTM_API_BASE || "";
+
+    const savedEmail = localStorage.getItem(AUTH_EMAIL_KEY);
+    if (savedEmail) {
+      authEmail.value = savedEmail;
     }
 
-    function getUserId() {
-      const val = (userIdInput.value || "").trim();
-      return val || "default-user";
+    function getAuthToken() {
+      return localStorage.getItem(AUTH_TOKEN_KEY);
     }
 
-    function fetchWithUser(url, options = {}) {
+    function setAuthToken(token, email) {
+      if (token) {
+        localStorage.setItem(AUTH_TOKEN_KEY, token);
+      } else {
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+      }
+      if (email) {
+        localStorage.setItem(AUTH_EMAIL_KEY, email);
+      }
+    }
+
+    function fetchWithAuth(url, options = {}) {
       const headers = new Headers(options.headers || {});
-      headers.set("X-User-Id", getUserId());
+      const token = getAuthToken();
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
       return fetch(url, { ...options, headers });
     }
 
@@ -566,10 +760,86 @@
       loadSummary();
     }
 
-    userIdInput.addEventListener("change", () => {
-      localStorage.setItem(USER_ID_STORAGE_KEY, getUserId());
+    function setAuthStatus(message, isError = false) {
+      authStatus.textContent = message;
+      authStatus.style.color = isError ? "#ff9b9b" : "";
+    }
+
+    async function signup() {
+      const email = (authEmail.value || "").trim();
+      const password = (authPassword.value || "").trim();
+      if (!email || !password) {
+        setAuthStatus("Enter email and password to sign up.", true);
+        return;
+      }
+      try {
+        const resp = await fetch(`${API_BASE}/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        if (!resp.ok) {
+          const text = await resp.text();
+          setAuthStatus(`Signup failed: ${text}`, true);
+          return;
+        }
+        const data = await resp.json();
+        setAuthToken(data.access_token, email);
+        setAuthStatus(`Signed in as ${email}.`);
+        resetUserScopedState();
+      } catch (err) {
+        setAuthStatus(`Signup error: ${err}`, true);
+      }
+    }
+
+    async function login() {
+      const email = (authEmail.value || "").trim();
+      const password = (authPassword.value || "").trim();
+      if (!email || !password) {
+        setAuthStatus("Enter email and password to log in.", true);
+        return;
+      }
+      try {
+        const resp = await fetch(`${API_BASE}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        if (!resp.ok) {
+          const text = await resp.text();
+          setAuthStatus(`Login failed: ${text}`, true);
+          return;
+        }
+        const data = await resp.json();
+        setAuthToken(data.access_token, email);
+        setAuthStatus(`Signed in as ${email}.`);
+        resetUserScopedState();
+      } catch (err) {
+        setAuthStatus(`Login error: ${err}`, true);
+      }
+    }
+
+    function logout() {
+      setAuthToken(null, null);
+      setAuthStatus("Logged out.");
       resetUserScopedState();
-    });
+    }
+
+    signupBtn.addEventListener("click", signup);
+    loginBtn.addEventListener("click", login);
+    logoutBtn.addEventListener("click", logout);
+
+    if (getAuthToken() && savedEmail) {
+      setAuthStatus(`Signed in as ${savedEmail}.`);
+    }
+
+    function ensureAuthenticated(message) {
+      if (getAuthToken()) {
+        return true;
+      }
+      setAuthStatus(message || "Please sign up or log in to continue.", true);
+      return false;
+    }
 
     // --- Tab logic ---
     function setActiveTab(tabName) {
@@ -593,6 +863,9 @@
     }
 
     async function startRecording() {
+      if (!ensureAuthenticated("Log in to record and save entries.")) {
+        return;
+      }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
@@ -608,7 +881,7 @@
           formData.append("file", blob, "entry.webm");
 
           try {
-            const resp = await fetchWithUser("http://localhost:8000/entries", { method: "POST", body: formData });
+            const resp = await fetchWithAuth(`${API_BASE}/entries`, { method: "POST", body: formData });
             if (!resp.ok) {
               const text = await resp.text();
               log(`❌ Server error: ${resp.status} – ${text}`);
@@ -652,6 +925,11 @@
 
     // --- Data fetching ---
     async function loadEntries() {
+      if (!ensureAuthenticated("Log in to view entries.")) {
+        recentEntriesEl.textContent = "Log in to load your entries.";
+        timelineStatus.textContent = "Log in to load your entries.";
+        return;
+      }
       if (entriesCache.length) {
         renderRecent(entriesCache);
         renderTimeline(entriesCache, "all");
@@ -659,7 +937,7 @@
       }
       timelineStatus.textContent = "Loading…";
       try {
-        const resp = await fetchWithUser("http://localhost:8000/insights/entries");
+        const resp = await fetchWithAuth(`${API_BASE}/insights/entries`);
         if (!resp.ok) throw new Error(`Server responded with ${resp.status}`);
         entriesCache = await resp.json();
         renderRecent(entriesCache);
@@ -671,6 +949,11 @@
     }
 
     async function loadSummary() {
+      if (!ensureAuthenticated("Log in to view insights.")) {
+        summaryText.textContent = "Log in to view your insights.";
+        entriesChart.innerHTML = "";
+        return;
+      }
       if (summaryCache) {
         renderSummary(summaryCache);
         return;
@@ -678,7 +961,7 @@
       summaryText.textContent = "Loading stats…";
       entriesChart.innerHTML = "";
       try {
-        const resp = await fetchWithUser("http://localhost:8000/insights/summary");
+        const resp = await fetchWithAuth(`${API_BASE}/insights/summary`);
         if (!resp.ok) throw new Error(`Server responded with ${resp.status}`);
         summaryCache = await resp.json();
         renderSummary(summaryCache);
@@ -824,12 +1107,15 @@
 
     // --- Weekly recap (simple card) ---
     async function generateWeeklyQuick() {
+      if (!ensureAuthenticated("Log in to generate a recap.")) {
+        return;
+      }
       weeklyQuickStatus.textContent = "Generating...";
       weeklyQuickResult.classList.add("hidden");
       weeklyQuickResult.innerHTML = "";
       weeklyQuickBtn.disabled = true;
       try {
-        const resp = await fetchWithUser("http://localhost:8000/insights/weekly");
+        const resp = await fetchWithAuth(`${API_BASE}/insights/weekly`);
         if (resp.status === 404) {
           weeklyQuickStatus.textContent = "Add at least one entry in the last 7 days to get a recap.";
           return;
@@ -858,12 +1144,15 @@
 
     // --- Prompt suggestion ---
     async function requestPrompt() {
+      if (!ensureAuthenticated("Log in to request a prompt.")) {
+        return;
+      }
       promptText.textContent = "Generating a personal prompt...";
       promptText.classList.remove("muted");
       promptBtn.disabled = true;
       promptUseBtn.disabled = true;
       try {
-        const resp = await fetchWithUser("http://localhost:8000/insights/prompt");
+        const resp = await fetchWithAuth(`${API_BASE}/prompt/daily`);
         if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
         const data = await resp.json();
         promptText.textContent = data.prompt || "No prompt generated.";
@@ -891,6 +1180,9 @@
 
     // --- Chat ---
     async function sendConversationMessage() {
+      if (!ensureAuthenticated("Log in to chat with your memories.")) {
+        return;
+      }
       const text = chatInput.value.trim();
       if (!text) {
         chatStatus.textContent = "Please enter a message.";
@@ -904,7 +1196,7 @@
       chatInput.value = "";
 
       try {
-        const resp = await fetchWithUser("http://localhost:8000/conversation/respond", {
+        const resp = await fetchWithAuth(`${API_BASE}/conversation/respond`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: conversationHistory }),

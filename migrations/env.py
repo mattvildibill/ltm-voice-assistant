@@ -6,6 +6,7 @@ from sqlmodel import SQLModel
 
 from app.db.database import engine
 from app.models.entry import Entry  # noqa: F401 ensure models are imported
+from app.models.user import User  # noqa: F401 ensure models are imported
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
