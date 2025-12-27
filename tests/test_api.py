@@ -105,10 +105,26 @@ def client(monkeypatch, tmp_path):
     return TestClient(app)
 
 
+def _auth_headers(client: TestClient) -> dict:
+    resp = client.post(
+        "/auth/register",
+        json={
+            "email": "test@example.com",
+            "password": "password123",
+            "display_name": "Tester",
+        },
+    )
+    assert resp.status_code in (200, 201), resp.text
+    token = resp.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
 def test_entry_creation(client: TestClient):
+    headers = _auth_headers(client)
     resp = client.post(
         "/entries",
         data={"text": "Today I reflected on life at home with Alex."},
+        headers=headers,
     )
     assert resp.status_code == 200, resp.text
     data = resp.json()
@@ -122,7 +138,7 @@ def test_entry_creation(client: TestClient):
     assert data["updated_at"] is not None
 
     # Ensure the entry persisted with the expected memory_type
-    entries = client.get("/insights/entries").json()
+    entries = client.get("/insights/entries", headers=headers).json()
     assert entries, "No entries returned from insights"
     assert entries[0]["memory_type"] == "reflection"
     assert entries[0]["source"] == "typed"
@@ -130,11 +146,12 @@ def test_entry_creation(client: TestClient):
 
 
 def test_insights_summary(client: TestClient):
+    headers = _auth_headers(client)
     # Add two entries
     for text in ["First entry about joy", "Second entry about reflection"]:
-        client.post("/entries", data={"text": text})
+        client.post("/entries", data={"text": text}, headers=headers)
 
-    resp = client.get("/insights/summary")
+    resp = client.get("/insights/summary", headers=headers)
     assert resp.status_code == 200, resp.text
     summary = resp.json()
     assert summary["total_entries"] >= 2
@@ -143,8 +160,11 @@ def test_insights_summary(client: TestClient):
 
 
 def test_insights_query(client: TestClient):
-    client.post("/entries", data={"text": "Feeling happy today"})
-    resp = client.post("/insights/query", json={"question": "How have I felt?"})
+    headers = _auth_headers(client)
+    client.post("/entries", data={"text": "Feeling happy today"}, headers=headers)
+    resp = client.post(
+        "/insights/query", json={"question": "How have I felt?"}, headers=headers
+    )
     assert resp.status_code == 200, resp.text
     payload = resp.json()
     assert payload["answer"]
@@ -171,9 +191,12 @@ def test_backwards_compatibility_memory_type_default(client: TestClient):
 
 
 def test_confirm_entry_updates_confidence_and_timestamp(client: TestClient):
-    create = client.post("/entries", data={"text": "I like hiking and coding."}).json()
+    headers = _auth_headers(client)
+    create = client.post(
+        "/entries", data={"text": "I like hiking and coding."}, headers=headers
+    ).json()
     entry_id = create["entry_id"]
-    confirm = client.post(f"/entries/{entry_id}/confirm").json()
+    confirm = client.post(f"/entries/{entry_id}/confirm", headers=headers).json()
     assert confirm["entry_id"] == entry_id
     assert confirm["confidence_score"] > create["confidence_score"]
     assert confirm["confidence_score"] <= 1.0
@@ -181,12 +204,18 @@ def test_confirm_entry_updates_confidence_and_timestamp(client: TestClient):
 
 
 def test_invalid_source_rejected(client: TestClient):
-    resp = client.post("/entries", data={"text": "Bad source", "source": "not-valid"})
+    headers = _auth_headers(client)
+    resp = client.post(
+        "/entries", data={"text": "Bad source", "source": "not-valid"}, headers=headers
+    )
     assert resp.status_code == 400
 
 
 def test_confidence_clamped(client: TestClient):
-    resp = client.post("/entries", data={"text": "High confidence", "confidence_score": 5})
+    headers = _auth_headers(client)
+    resp = client.post(
+        "/entries", data={"text": "High confidence", "confidence_score": 5}, headers=headers
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert data["confidence_score"] == pytest.approx(1.0)

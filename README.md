@@ -3,13 +3,13 @@
 A personal life-story memory tool: record voice notes, transcribe with OpenAI, analyze them into structured memories, and explore them via a timeline, insights, recaps, and chat grounded only in your own entries.
 
 ## Features
-- FastAPI backend with CORS for local dev.
+- FastAPI backend with CORS for local dev + JWT auth.
 - Capture: `POST /entries` accepts audio (`multipart/form-data`) or text; audio is transcribed with `gpt-4o-transcribe`.
 - Analysis: OpenAI (`gpt-4o-mini`) produces summary, themes, topics, sentiment (label + score), people/places, emotions, memory chunks, word count; embeddings (`text-embedding-3-small`) stored for retrieval.
 - Retrieval: semantic search powers Q&A and conversation grounded only in stored entries.
 - Recaps: weekly/monthly recaps synthesized from local stats + entry snippets.
 - Persistence: SQLite via SQLModel (`ltm.db` by default) with Alembic migrations.
-- Frontend (`frontend/index.html`), three tabs:
+- Frontend (`frontend/index.html`) with auth and three tabs:
   - **Capture**: recorder + recent entries.
   - **Timeline**: filters (7/30/all) + expandable entry cards with sentiment and topics.
   - **Insights & Chat**: summary stats with entries/day chart, weekly recap, and chat grounded in your memories.
@@ -40,15 +40,17 @@ A personal life-story memory tool: record voice notes, transcribe with OpenAI, a
 cd /home/mattv/Projects/ltm-lifestory
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install fastapi uvicorn[standard] sqlmodel python-dotenv openai
-# Additional tooling (migrations/tests):
-pip install alembic pytest pydantic-settings
+pip install fastapi uvicorn[standard] sqlmodel python-dotenv openai psycopg[binary]
+# Additional tooling (migrations/tests/auth):
+pip install alembic pytest pydantic-settings passlib[bcrypt] python-jose
 ```
 
 Create a `.env` file:
 ```
 OPENAI_API_KEY=your_key_here
 # Optional: DATABASE_URL=sqlite:///./ltm.db
+# JWT_SECRET_KEY=dev-secret-change-me
+# ALLOWED_ORIGINS=http://localhost:8000
 ```
 
 # Initialize the database (once) or run migrations:
@@ -68,6 +70,8 @@ API base: `http://127.0.0.1:8000`
 - **Insights & Q&A tab:** automatically fetches `/insights/entries` and `/insights/summary`, and lets you ask questions via `/insights/query`.
 
 ## API Quick Reference
+- `POST /auth/register` – `{ "email": "...", "password": "..." }` → returns access token + user info.
+- `POST /auth/login` – `{ "email": "...", "password": "..." }` → returns access token + user info.
 - `POST /entries` – Form data: `file` (audio) or `text` (string). Returns stored entry info + analysis.
 - `GET /prompt/daily` – Returns a generated daily reflection prompt.
 - `GET /insights/entries` – Entry previews for the Insights tab.
@@ -83,11 +87,11 @@ API base: `http://127.0.0.1:8000`
 - The backend uses OpenAI; make sure the `.env` file is loaded before running.
 - `ltm.db` is ignored by git; delete it if you want a fresh database.
 - Update CORS or host settings in `main.py` if you deploy beyond local dev.
-- Multi-user scoping: supply an `X-User-Id` header on API requests to isolate entries per user (the frontend now includes an “Active User” input that sets this header). If omitted, requests default to `default-user`.
+- Multi-user scoping: authenticate via `/auth/register` or `/auth/login` and include the `Authorization: Bearer <token>` header on API requests. The frontend handles this automatically.
 
 ## Configuration
 - Managed via Pydantic settings in `app/core/config.py` (loads `.env`).
-- Key env vars: `OPENAI_API_KEY`, `DATABASE_URL` (defaults to `sqlite:///./ltm.db`), `ENVIRONMENT`.
+- Key env vars: `OPENAI_API_KEY`, `DATABASE_URL` (defaults to `sqlite:///./ltm.db`), `ENVIRONMENT`, `JWT_SECRET_KEY`, `ALLOWED_ORIGINS`.
 
 ## Database migrations
 - Alembic is configured (`alembic.ini`, `migrations/`).
@@ -97,6 +101,9 @@ API base: `http://127.0.0.1:8000`
 ## Tests
 - Basic pytest suite exercises entry creation, insights summary, and Q&A (`tests/test_api.py`).
 - Run with: `pytest`
+
+## Deployment guide
+- See `docs/deployment_render.md` for a free-tier-friendly Render + Postgres setup.
 
 ## Seeding fake data (no OpenAI)
 - Generate one year of synthetic daily entries without hitting OpenAI:
