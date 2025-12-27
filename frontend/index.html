@@ -203,6 +203,36 @@
     }
     .hero-card h4 { margin-bottom: 6px; font-size: 16px; }
 
+    .access-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .access-field {
+      border: 1px solid var(--border);
+      background: rgba(12, 18, 34, 0.75);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .access-field label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .access-field input {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 8px;
+      background: #0b1222;
+      color: #eaf0ff;
+      font-family: "Space Grotesk", "Helvetica Neue", sans-serif;
+    }
+
     .tabs {
       display: flex;
       gap: 10px;
@@ -436,6 +466,10 @@
       font-size: 13px;
       text-align: center;
     }
+    .video-card { border: 1px solid var(--border-2); border-radius: 12px; padding: 12px; background: rgba(108, 240, 194, 0.08); margin-top: 12px; }
+    .video-player { width: 100%; border-radius: 12px; border: 1px solid var(--border); margin-top: 10px; background: #0b1222; }
+    .download-link { display: inline-block; margin-top: 8px; color: var(--accent); text-decoration: none; }
+    .download-link:hover { text-decoration: underline; }
 
     .chat-pane {
       background: #0d1220;
@@ -669,6 +703,19 @@
             <div id="weeklyQuickStatus" class="muted small"></div>
             <div id="weeklyQuickResult" class="recap-card hidden" style="margin:0;"></div>
           </div>
+          <div class="video-card">
+            <div class="card-header" style="margin-bottom:4px;">
+              <div>
+                <div class="eyebrow">Weekly video</div>
+                <h3 style="margin:0;">30s recap</h3>
+                <p class="small muted">AI-generated flat pastel cartoon scenes with a neutral voice. Generated on demand.</p>
+              </div>
+              <button id="weeklyVideoBtn" class="primary">Generate video</button>
+            </div>
+            <div id="weeklyVideoStatus" class="muted small"></div>
+            <video id="weeklyVideoPlayer" class="video-player hidden" controls playsinline></video>
+            <a id="weeklyVideoDownload" class="download-link hidden">Download MP4</a>
+          </div>
         </div>
         <div class="card">
           <div class="card-header">
@@ -701,6 +748,8 @@
     const stopBtn = document.getElementById("stopBtn");
     const statusEl = document.getElementById("status");
     const logEl = document.getElementById("log");
+    const userIdInput = document.getElementById("userIdInput");
+    const apiKeyInput = document.getElementById("apiKeyInput");
     const tabButtons = document.querySelectorAll(".tab-btn");
     const tabContents = document.querySelectorAll(".tab-content");
     const recentEntriesEl = document.getElementById("recentEntries");
@@ -714,6 +763,10 @@
     const weeklyQuickBtn = document.getElementById("weeklyQuickBtn");
     const weeklyQuickStatus = document.getElementById("weeklyQuickStatus");
     const weeklyQuickResult = document.getElementById("weeklyQuickResult");
+    const weeklyVideoBtn = document.getElementById("weeklyVideoBtn");
+    const weeklyVideoStatus = document.getElementById("weeklyVideoStatus");
+    const weeklyVideoPlayer = document.getElementById("weeklyVideoPlayer");
+    const weeklyVideoDownload = document.getElementById("weeklyVideoDownload");
     const chatPane = document.getElementById("chatPane");
     const chatInput = document.getElementById("chatInput");
     const chatSendBtn = document.getElementById("chatSendBtn");
@@ -731,6 +784,7 @@
     let conversationHistory = [];
     let entriesCache = [];
     let summaryCache = null;
+    let weeklyVideoBlobUrl = null;
     const authEmail = document.getElementById("authEmail");
     const authPassword = document.getElementById("authPassword");
     const signupBtn = document.getElementById("signupBtn");
@@ -776,6 +830,15 @@
       summaryCache = null;
       conversationHistory = [];
       renderConversation();
+      chatStatus.textContent = "";
+      if (weeklyVideoBlobUrl) {
+        URL.revokeObjectURL(weeklyVideoBlobUrl);
+        weeklyVideoBlobUrl = null;
+      }
+      weeklyVideoPlayer.classList.add("hidden");
+      weeklyVideoPlayer.removeAttribute("src");
+      weeklyVideoDownload.classList.add("hidden");
+      weeklyVideoStatus.textContent = "";
       loadEntries();
       loadSummary();
     }
@@ -935,8 +998,8 @@
               return;
             }
             await resp.json();
-            log("✅ Entry stored.");
-            statusEl.textContent = "Entry saved successfully.";
+            log("✅ Entry stored. Analysis running in the background.");
+            statusEl.textContent = "Entry saved. Analysis in progress.";
             entriesCache = []; // force reload
             loadEntries();
             loadSummary();
@@ -1019,7 +1082,7 @@
     async function updateEntry(entryId, payload, statusEl) {
       statusEl.textContent = "Saving changes…";
       try {
-        const resp = await fetch(`http://localhost:8000/entries/${entryId}`, {
+        const resp = await fetchWithAuth(`${API_BASE}/entries/${entryId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -1039,7 +1102,7 @@
     async function confirmEntry(entryId, statusEl) {
       statusEl.textContent = "Confirming…";
       try {
-        const resp = await fetch(`http://localhost:8000/entries/${entryId}/confirm`, {
+        const resp = await fetchWithAuth(`${API_BASE}/entries/${entryId}/confirm`, {
           method: "POST",
         });
         if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
@@ -1054,7 +1117,7 @@
     async function flagEntry(entryId, reason, statusEl, flagged = true) {
       statusEl.textContent = flagged ? "Flagging…" : "Removing flag…";
       try {
-        const resp = await fetch(`http://localhost:8000/entries/${entryId}/flag`, {
+        const resp = await fetchWithAuth(`${API_BASE}/entries/${entryId}/flag`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ flagged, reason }),
@@ -1077,7 +1140,13 @@
       const topThree = entries.slice(0, 3);
       recentEntriesEl.innerHTML = topThree.map((e) => {
         const date = new Date(e.created_at).toLocaleString();
-        return `<div class="entry-card"><div class="entry-header"><div>${date}</div></div><div class="entry-body">${e.summary || e.preview || "—"}</div></div>`;
+        const status = e.processing_status || "complete";
+        const statusLine = status === "pending"
+          ? `<div class="small muted">Processing…</div>`
+          : status === "failed"
+            ? `<div class="small muted">Processing failed</div>`
+            : "";
+        return `<div class="entry-card"><div class="entry-header"><div>${date}</div></div><div class="entry-body">${e.summary || e.preview || "—"}${statusLine}</div></div>`;
       }).join("");
     }
 
@@ -1118,6 +1187,12 @@
         const sentimentBadge = entry.sentiment_label
           ? `<span class="badge ${sentimentClass}">${entry.sentiment_label}${entry.sentiment_score ? ` (${Math.round(entry.sentiment_score * 100)}%)` : ""}</span>`
           : "";
+        const processingStatus = entry.processing_status || "complete";
+        const processingBadge = processingStatus === "pending"
+          ? '<span class="badge neutral">Processing…</span>'
+          : processingStatus === "failed"
+            ? '<span class="badge negative">Processing failed</span>'
+            : "";
         const memoryType = entry.memory_type || "event";
         const options = ["event", "reflection", "preference", "identity", "project"];
         const optionsHtml = options.map((opt) => `<option value="${opt}" ${opt === memoryType ? "selected" : ""}>${opt}</option>`).join("");
@@ -1131,7 +1206,7 @@
         card.innerHTML = `
           <div class="entry-header">
             <div><strong>${dateStr}</strong>${titleLine}</div>
-            <div>${sentimentBadge}</div>
+            <div>${sentimentBadge} ${processingBadge}</div>
           </div>
           <div class="entry-body">
             <div>${entry.summary || entry.preview || "—"}</div>
@@ -1149,6 +1224,9 @@
               <div><strong>People/Places:</strong> ${joinList(entry.people)} / ${joinList(entry.places)}</div>
               <div><strong>Tags:</strong> ${joinList(entry.tags)}</div>
               <div><strong>Word count:</strong> ${entry.word_count ?? "-"}</div>
+              ${processingStatus !== "complete"
+                ? `<div><strong>Processing:</strong> ${processingStatus}${entry.processing_error ? ` — ${entry.processing_error}` : ""}</div>`
+                : ""}
               <div class="entry-actions">
                 <button class="edit-btn" data-entry="${entry.id}">Edit</button>
                 <button class="confirm-btn primary" data-entry="${entry.id}">Confirm memory</button>
@@ -1361,6 +1439,72 @@
     }
     weeklyQuickBtn.addEventListener("click", generateWeeklyQuick);
 
+    // --- Weekly video ---
+    async function generateWeeklyVideo() {
+      weeklyVideoStatus.textContent = "Starting weekly video render...";
+      weeklyVideoBtn.disabled = true;
+      weeklyVideoPlayer.classList.add("hidden");
+      weeklyVideoDownload.classList.add("hidden");
+      if (weeklyVideoBlobUrl) {
+        URL.revokeObjectURL(weeklyVideoBlobUrl);
+        weeklyVideoBlobUrl = null;
+      }
+      try {
+        if (!ensureAuthenticated("Log in to generate a weekly video.")) {
+          return;
+        }
+        const resp = await fetchWithAuth(`${API_BASE}/products/weekly-video`, {
+          method: "POST",
+        });
+        if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
+        const data = await resp.json();
+        await pollWeeklyVideoStatus(data.job_id);
+      } catch (err) {
+        weeklyVideoStatus.textContent = `Error: ${err.message || "Unable to start video"}`;
+      } finally {
+        weeklyVideoBtn.disabled = false;
+      }
+    }
+
+    async function pollWeeklyVideoStatus(jobId) {
+      const maxAttempts = 60;
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        weeklyVideoStatus.textContent = `Rendering video... (${attempt + 1}/${maxAttempts})`;
+        const resp = await fetchWithAuth(`${API_BASE}/products/${jobId}`);
+        if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
+        const data = await resp.json();
+        if (data.status === "complete") {
+          await loadWeeklyVideo(jobId);
+          weeklyVideoStatus.textContent = "Weekly video ready.";
+          return;
+        }
+        if (data.status === "failed") {
+          weeklyVideoStatus.textContent = `Failed: ${data.error || "Unknown error"}`;
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+      weeklyVideoStatus.textContent = "Still rendering. Check back in a moment.";
+    }
+
+    async function loadWeeklyVideo(jobId) {
+      const resp = await fetchWithAuth(`${API_BASE}/products/${jobId}/download`);
+      if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
+      const blob = await resp.blob();
+      if (weeklyVideoBlobUrl) {
+        URL.revokeObjectURL(weeklyVideoBlobUrl);
+      }
+      weeklyVideoBlobUrl = URL.createObjectURL(blob);
+      weeklyVideoPlayer.src = weeklyVideoBlobUrl;
+      weeklyVideoPlayer.classList.remove("hidden");
+      weeklyVideoDownload.href = weeklyVideoBlobUrl;
+      weeklyVideoDownload.download = `weekly-video-${jobId}.mp4`;
+      weeklyVideoDownload.textContent = "Download MP4";
+      weeklyVideoDownload.classList.remove("hidden");
+    }
+
+    weeklyVideoBtn.addEventListener("click", generateWeeklyVideo);
+
     // --- Prompt suggestion ---
     async function requestPrompt() {
       if (!ensureAuthenticated("Log in to request a prompt.")) {
@@ -1371,7 +1515,7 @@
       promptBtn.disabled = true;
       promptUseBtn.disabled = true;
       try {
-        const resp = await fetchWithAuth(`${API_BASE}/prompt/daily`);
+        const resp = await fetchWithAuth(`${API_BASE}/insights/prompt`);
         if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
         const data = await resp.json();
         promptText.textContent = data.prompt || "No prompt generated.";

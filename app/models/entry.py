@@ -61,6 +61,8 @@ class Entry(SQLModel, table=True):
     embedding: Optional[str] = None  # JSON array of floats
     sentiment_label: Optional[str] = None
     sentiment_score: Optional[float] = None
+    processing_status: str = Field(default="complete", index=True)
+    processing_error: Optional[str] = None
 
     # trust/verification fields
     confidence_score: float = Field(default=0.75)

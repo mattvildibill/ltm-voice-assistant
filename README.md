@@ -6,6 +6,7 @@ A personal life-story memory tool: record voice notes, transcribe with OpenAI, a
 - FastAPI backend with CORS for local dev + JWT auth.
 - Capture: `POST /entries` accepts audio (`multipart/form-data`) or text; audio is transcribed with `gpt-4o-transcribe`.
 - Analysis: OpenAI (`gpt-4o-mini`) produces summary, themes, topics, sentiment (label + score), people/places, emotions, memory chunks, word count; embeddings (`text-embedding-3-small`) stored for retrieval.
+- Background processing: analysis + embeddings run asynchronously; entries report `processing_status`.
 - Retrieval: semantic search powers Q&A and conversation grounded only in stored entries.
 - Review workflow: edit entries, confirm memories to boost confidence, and flag incorrect items with reasons.
 - Recaps: weekly/monthly recaps synthesized from local stats + entry snippets.
@@ -44,6 +45,8 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install fastapi uvicorn[standard] sqlmodel python-dotenv openai psycopg[binary]
 # Additional tooling (migrations/tests/auth):
 pip install alembic pytest pydantic-settings passlib[bcrypt] python-jose
+# Weekly video generation:
+pip install pillow
 ```
 
 Create a `.env` file:
@@ -85,6 +88,9 @@ API base: `http://127.0.0.1:8000`
 - `POST /conversation/respond` – Send a conversational message with history; returns a grounded reply and referenced entry ids.
 - `GET /insights/weekly` – Weekly recap (summary, themes, highlights, mood trajectory).
 - `GET /insights/monthly` – Monthly recap (summary, themes, highlights, mood trajectory).
+- `POST /products/weekly-video` – Generate a 30s weekly recap video (returns job id).
+- `GET /products/{job_id}` – Check render status.
+- `GET /products/{job_id}/download` – Download the generated MP4.
 - `GET /health` – Basic health check.
 
 ## Notes
@@ -93,6 +99,7 @@ API base: `http://127.0.0.1:8000`
 - `ltm.db` is ignored by git; delete it if you want a fresh database.
 - Update CORS or host settings in `main.py` if you deploy beyond local dev.
 - Multi-user scoping: authenticate via `/auth/register` or `/auth/login` and include the `Authorization: Bearer <token>` header on API requests. The frontend handles this automatically.
+- Weekly videos require Pillow + ffmpeg installed to render scenes and MP4 output, plus OpenAI image generation.
 
 ## Configuration
 - Managed via Pydantic settings in `app/core/config.py` (loads `.env`).

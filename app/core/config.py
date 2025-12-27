@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     """Application configuration loaded from environment or .env."""
 
     openai_api_key: Optional[str] = None
+    api_key: Optional[str] = None
     database_url: str = "sqlite:///./ltm.db"
     environment: str = "development"
     allowed_origins: Optional[str] = None

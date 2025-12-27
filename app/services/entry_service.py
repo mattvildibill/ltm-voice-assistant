@@ -1,10 +1,10 @@
 import json
-import os
 from datetime import datetime
 from typing import Optional
 
-from fastapi import UploadFile
+from fastapi import BackgroundTasks, UploadFile
 from dotenv import load_dotenv
+from sqlmodel import select
 
 from app.services.analysis_service import analyze_text
 from app.services.realtime_transcription_service import transcribe_realtime
@@ -76,12 +76,124 @@ def _normalize_confidence(confidence: Optional[float], source: SourceType) -> fl
     return clamp(val)
 
 
+def _stringify_list(value) -> Optional[str]:
+    if isinstance(value, list):
+        cleaned = [str(v).strip() for v in value if str(v).strip()]
+        return ", ".join(cleaned) if cleaned else None
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def _extract_analysis_fields(analysis: Optional[dict]) -> dict:
+    if not isinstance(analysis, dict):
+        analysis = {}
+
+    summary = analysis.get("summary")
+    themes = analysis.get("themes")
+    topics = analysis.get("topics")
+    emotions = analysis.get("emotions")
+    people = analysis.get("people")
+    places = analysis.get("places")
+    memory_chunks = analysis.get("memory_chunks")
+    sentiment = analysis.get("sentiment") or {}
+
+    sentiment_label = None
+    sentiment_score = None
+    if isinstance(sentiment, dict):
+        sentiment_label = sentiment.get("label")
+        try:
+            sentiment_score = float(sentiment.get("score")) if sentiment.get("score") is not None else None
+        except (TypeError, ValueError):
+            sentiment_score = None
+
+    themes_str = _stringify_list(themes)
+    topics_str = _stringify_list(topics)
+    people_str = _stringify_list(people)
+    places_str = _stringify_list(places)
+
+    emotion_names = []
+    emotion_score_map = {}
+    if isinstance(emotions, list):
+        for emo in emotions:
+            if isinstance(emo, dict):
+                name = emo.get("name")
+                score = emo.get("score")
+            elif isinstance(emo, str):
+                name = emo.strip()
+                score = None
+            else:
+                name = None
+                score = None
+            if name:
+                emotion_names.append(name)
+            if name is not None and score is not None:
+                try:
+                    emotion_score_map[name] = float(score)
+                except (TypeError, ValueError):
+                    continue
+
+    emotions_str = ", ".join(emotion_names) if emotion_names else None
+    emotion_scores_str = json.dumps(emotion_score_map) if emotion_score_map else None
+    memory_chunks_str = json.dumps(memory_chunks) if memory_chunks else None
+
+    summary_val = summary.strip() if isinstance(summary, str) else None
+
+    return {
+        "summary": summary_val or None,
+        "themes": themes_str,
+        "topics": topics_str,
+        "emotions": emotions_str,
+        "emotion_scores": emotion_scores_str,
+        "people": people_str,
+        "places": places_str,
+        "memory_chunks": memory_chunks_str,
+        "sentiment_label": sentiment_label,
+        "sentiment_score": sentiment_score,
+        "tags": topics if isinstance(topics, list) else None,
+    }
+
+
+def _run_analysis_pipeline(entry_id: str, user_id: str, text: str) -> None:
+    error_messages = []
+    analysis_fields = {}
+    try:
+        analysis = analyze_text(text)
+        analysis_fields = _extract_analysis_fields(analysis)
+    except Exception as exc:
+        error_messages.append(f"analysis failed: {exc}")
+
+    embedding_vec = embed_text(text)
+    embedding_str = serialize_embedding(embedding_vec)
+    if embedding_vec is None:
+        error_messages.append("embedding failed")
+
+    with get_session() as session:
+        entry = session.exec(
+            select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id)
+        ).first()
+        if not entry:
+            return
+
+        for key, value in analysis_fields.items():
+            setattr(entry, key, value)
+
+        entry.embedding = embedding_str
+        entry.processing_status = "failed" if error_messages else "complete"
+        entry.processing_error = "; ".join(error_messages) if error_messages else None
+        entry.updated_at = datetime.utcnow()
+        session.add(entry)
+        session.commit()
+
+
 async def process_entry(
     text: Optional[str],
     file: Optional[UploadFile],
     user_id: str,
     source: Optional[str] = None,
     confidence_score: Optional[float] = None,
+    user_id: str = "default-user",
+    background_tasks: Optional[BackgroundTasks] = None,
 ):
     """
     Handles text OR audio entries.
@@ -98,7 +210,7 @@ async def process_entry(
         source_type = "audio"
 
     if not text or text.strip() == "":
-        return {"error": "No text or audio content provided."}
+        raise ValueError("No text or audio content provided.")
 
     # Compute basic metrics
     word_count = len(text.split())
@@ -106,54 +218,7 @@ async def process_entry(
     source_enum = _normalize_source(source, has_audio=bool(file))
     confidence = _normalize_confidence(confidence_score, source_enum)
 
-    # Run analysis pipeline for richer metadata
-    analysis = analyze_text(text)
     memory_type = classify_memory_type(text)
-
-    # Extract safe fields
-    summary = analysis.get("summary")
-    themes = analysis.get("themes")
-    topics = analysis.get("topics")
-    emotions = analysis.get("emotions")
-    people = analysis.get("people")
-    places = analysis.get("places")
-    memory_chunks = analysis.get("memory_chunks")
-    sentiment = analysis.get("sentiment") or {}
-    sentiment_label = None
-    sentiment_score = None
-    if isinstance(sentiment, dict):
-        sentiment_label = sentiment.get("label")
-        try:
-            sentiment_score = float(sentiment.get("score")) if sentiment.get("score") is not None else None
-        except (TypeError, ValueError):
-            sentiment_score = None
-
-    themes_str = ", ".join(themes) if isinstance(themes, list) else None
-    topics_str = ", ".join(topics) if isinstance(topics, list) else None
-    # Extract emotion names for quick display
-    emotion_names = []
-    emotion_score_map = {}
-    if isinstance(emotions, list):
-        for emo in emotions:
-            name = emo.get("name") if isinstance(emo, dict) else None
-            score = emo.get("score") if isinstance(emo, dict) else None
-            if name:
-                emotion_names.append(name)
-            if name is not None and score is not None:
-                try:
-                    emotion_score_map[name] = float(score)
-                except (TypeError, ValueError):
-                    continue
-    emotions_str = ", ".join(emotion_names) if emotion_names else None
-    emotion_scores_str = json.dumps(emotion_score_map) if emotion_score_map else None
-    people_str = ", ".join(people) if isinstance(people, list) else None
-    places_str = ", ".join(places) if isinstance(places, list) else None
-    memory_chunks_str = json.dumps(memory_chunks) if memory_chunks else None
-
-    # Create embedding for semantic search
-    # If embedding model changes, re-embed historical entries via a script/migration.
-    embedding_vec = embed_text(text)
-    embedding_str = serialize_embedding(embedding_vec)
 
     # Store in database
     with get_session() as session:
@@ -162,34 +227,29 @@ async def process_entry(
             source_type=source_type,
             original_text=text,
             content=text,
-            summary=summary,
-            themes=themes_str,
-            emotions=emotions_str,
-            emotion_scores=emotion_scores_str,
-            topics=topics_str,
-            people=people_str,
-            places=places_str,
-            memory_chunks=memory_chunks_str,
             word_count=word_count,
-            embedding=embedding_str,
-            sentiment_label=sentiment_label,
-            sentiment_score=sentiment_score,
             memory_type=memory_type,
-            tags=topics if isinstance(topics, list) else None,
             source=source_enum,
             confidence_score=confidence,
             last_confirmed_at=None,
             updated_at=datetime.utcnow(),
+            processing_status="pending",
+            processing_error=None,
         )
         session.add(entry)
         session.commit()
         session.refresh(entry)
 
+    if background_tasks:
+        background_tasks.add_task(_run_analysis_pipeline, entry.id, user_id, text)
+    else:
+        _run_analysis_pipeline(entry.id, user_id, text)
+
     return {
         "entry_id": entry.id,
         "source_type": source_type,
         "input_text": text,
-        "analysis": analysis,
+        "analysis": None,
         "transcription_meta": transcript_meta,
         "message": "Entry processed and stored successfully",
         "word_count": word_count,
@@ -198,4 +258,6 @@ async def process_entry(
         "confidence_score": entry.confidence_score,
         "last_confirmed_at": entry.last_confirmed_at,
         "updated_at": entry.updated_at,
+        "processing_status": entry.processing_status,
+        "processing_error": entry.processing_error,
     }

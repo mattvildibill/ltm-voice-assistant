@@ -46,6 +46,8 @@ def migrate_db() -> None:
             ("embedding", "TEXT"),
             ("sentiment_label", "TEXT"),
             ("sentiment_score", "FLOAT"),
+            ("processing_status", "TEXT"),
+            ("processing_error", "TEXT"),
             ("user_id", "TEXT"),
             ("memory_type", "TEXT"),
             ("title", "TEXT"),

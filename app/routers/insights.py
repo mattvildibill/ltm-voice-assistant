@@ -10,6 +10,7 @@ from sqlmodel import Session, select
 from app.core.auth import get_current_user_id
 from app.db.database import get_session
 from app.models.entry import Entry
+from app.core.auth import get_current_user_id
 from app.services.openai_service import client
 from app.services.retrieval_scoring import rerank_entries
 
@@ -45,6 +46,8 @@ class EntryPreview(BaseModel):
     last_confirmed_at: Optional[datetime] = None
     is_flagged: bool = False
     flagged_reason: Optional[str] = None
+    processing_status: str = "complete"
+    processing_error: Optional[str] = None
 
 
 class EntriesPerDay(BaseModel):
@@ -164,6 +167,8 @@ def list_entries(
                 last_confirmed_at=getattr(entry, "last_confirmed_at", None),
                 is_flagged=bool(getattr(entry, "is_flagged", False)),
                 flagged_reason=getattr(entry, "flagged_reason", None),
+                processing_status=getattr(entry, "processing_status", "complete"),
+                processing_error=getattr(entry, "processing_error", None),
             )
         )
 

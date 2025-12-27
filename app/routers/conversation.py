@@ -28,7 +28,7 @@ class ConversationResponse(BaseModel):
     used_entry_ids: List[str] = Field(default_factory=list)
 
 
-# Simple in-memory conversation state (single-user use case)
+# Simple in-memory conversation state keyed by user_id
 conversation_state: Dict[str, List[ConversationTurn]] = {}
 MAX_HISTORY = 20
 

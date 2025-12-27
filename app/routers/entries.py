@@ -48,6 +48,11 @@ def _split(value: Optional[str]) -> List[str]:
         return []
     return [item.strip() for item in value.split(",") if item.strip()]
 
+def _get_entry(session, entry_id: str, user_id: str) -> Optional[Entry]:
+    return session.exec(
+        select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id)
+    ).first()
+
 
 def _get_entry(session, entry_id: str, user_id: str) -> Optional[Entry]:
     return session.exec(
