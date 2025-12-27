@@ -54,6 +54,8 @@ def migrate_db() -> None:
             ("confidence_score", "FLOAT"),
             ("source", "TEXT"),
             ("last_confirmed_at", "DATETIME"),
+            ("is_flagged", "BOOLEAN"),
+            ("flagged_reason", "TEXT"),
             ("updated_at", "DATETIME"),
         ],
     )

@@ -203,6 +203,43 @@ def test_confirm_entry_updates_confidence_and_timestamp(client: TestClient):
     assert confirm["last_confirmed_at"] is not None
 
 
+def test_patch_entry_updates_fields(client: TestClient):
+    create = client.post("/entries", data={"text": "Original text"}).json()
+    entry_id = create["entry_id"]
+
+    payload = {
+        "title": "Updated title",
+        "content": "Updated content with new details.",
+        "summary": "Short updated summary.",
+        "tags": ["alpha", "beta"],
+        "memory_type": "preference",
+        "people": ["Sam"],
+        "places": ["Paris"],
+    }
+    resp = client.patch(f"/entries/{entry_id}", json=payload)
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["entry_id"] == entry_id
+    assert data["title"] == "Updated title"
+    assert data["content"] == "Updated content with new details."
+    assert data["summary"] == "Short updated summary."
+    assert data["memory_type"] == "preference"
+    assert data["tags"] == ["alpha", "beta"]
+    assert data["people"] == ["Sam"]
+    assert data["places"] == ["Paris"]
+    assert data["updated_at"] is not None
+
+    entries = client.get("/insights/entries").json()
+    updated = next(e for e in entries if e["id"] == entry_id)
+    assert updated["title"] == "Updated title"
+    assert updated["content"] == "Updated content with new details."
+    assert updated["summary"] == "Short updated summary."
+    assert updated["tags"] == ["alpha", "beta"]
+    assert updated["people"] == ["Sam"]
+    assert updated["places"] == ["Paris"]
+    assert updated["memory_type"] == "preference"
+
+
 def test_invalid_source_rejected(client: TestClient):
     headers = _auth_headers(client)
     resp = client.post(

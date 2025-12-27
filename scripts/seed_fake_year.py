@@ -9,8 +9,15 @@ Usage (run from project root with venv + .env loaded):
 
 import argparse
 import random
+import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import List
+
+# Ensure project root is on the import path when running as a script
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from sqlmodel import delete, select
 

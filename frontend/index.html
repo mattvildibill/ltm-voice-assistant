@@ -382,6 +382,26 @@
     .entry-body { margin-top: 8px; color: #dbe6ff; }
     .entry-meta { font-size: 13px; color: var(--muted); line-height: 1.5; }
     .expand { cursor: pointer; color: var(--accent); font-size: 13px; margin-top: 6px; display: inline-block; }
+    .trust-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 6px; }
+    .entry-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .entry-edit { margin-top: 10px; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.02); }
+    .entry-edit label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-top: 10px; }
+    .entry-edit input,
+    .entry-edit select,
+    .entry-edit textarea {
+      width: 100%;
+      margin-top: 6px;
+      background: #0c1325;
+      color: #eaefff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      font-family: "Space Grotesk", "Helvetica Neue", sans-serif;
+    }
+    .entry-edit .row { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    .entry-edit .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .flag-pill { background: rgba(255, 123, 123, 0.12); color: #ffb4b4; border: 1px solid rgba(255, 123, 123, 0.3); }
+    .entry-status { margin-top: 8px; font-size: 12px; color: var(--muted); }
 
     .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 12px; }
     .filter-btn { background: rgba(255, 255, 255, 0.03); }
@@ -841,6 +861,32 @@
       return false;
     }
 
+    function getActiveRange() {
+      const active = document.querySelector(".filter-btn.active");
+      return active ? active.dataset.range : "all";
+    }
+
+    function formatDate(value) {
+      if (!value) return "—";
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? "—" : parsed.toLocaleString();
+    }
+
+    function formatPercent(value) {
+      if (value === null || value === undefined) return "—";
+      const num = Number(value);
+      return Number.isNaN(num) ? "—" : `${Math.round(num * 100)}%`;
+    }
+
+    function joinList(values) {
+      return values && values.length ? values.join(", ") : "—";
+    }
+
+    function parseCommaList(value) {
+      if (!value) return [];
+      return value.split(",").map((item) => item.trim()).filter(Boolean);
+    }
+
     // --- Tab logic ---
     function setActiveTab(tabName) {
       tabButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tabName));
@@ -932,7 +978,7 @@
       }
       if (entriesCache.length) {
         renderRecent(entriesCache);
-        renderTimeline(entriesCache, "all");
+        renderTimeline(entriesCache, getActiveRange());
         return;
       }
       timelineStatus.textContent = "Loading…";
@@ -941,7 +987,7 @@
         if (!resp.ok) throw new Error(`Server responded with ${resp.status}`);
         entriesCache = await resp.json();
         renderRecent(entriesCache);
-        renderTimeline(entriesCache, "all");
+        renderTimeline(entriesCache, getActiveRange());
       } catch (err) {
         recentEntriesEl.textContent = `Failed to load entries: ${err.message}`;
         timelineStatus.textContent = `Failed to load entries: ${err.message}`;
@@ -967,6 +1013,58 @@
         renderSummary(summaryCache);
       } catch (err) {
         summaryText.textContent = `Failed to load stats: ${err.message}`;
+      }
+    }
+
+    async function updateEntry(entryId, payload, statusEl) {
+      statusEl.textContent = "Saving changes…";
+      try {
+        const resp = await fetch(`http://localhost:8000/entries/${entryId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
+        entriesCache = [];
+        summaryCache = null;
+        await loadEntries();
+        statusEl.textContent = "Saved.";
+        return true;
+      } catch (err) {
+        statusEl.textContent = `Save failed: ${err.message}`;
+        return false;
+      }
+    }
+
+    async function confirmEntry(entryId, statusEl) {
+      statusEl.textContent = "Confirming…";
+      try {
+        const resp = await fetch(`http://localhost:8000/entries/${entryId}/confirm`, {
+          method: "POST",
+        });
+        if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
+        entriesCache = [];
+        await loadEntries();
+        statusEl.textContent = "Confirmed.";
+      } catch (err) {
+        statusEl.textContent = `Confirm failed: ${err.message}`;
+      }
+    }
+
+    async function flagEntry(entryId, reason, statusEl, flagged = true) {
+      statusEl.textContent = flagged ? "Flagging…" : "Removing flag…";
+      try {
+        const resp = await fetch(`http://localhost:8000/entries/${entryId}/flag`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ flagged, reason }),
+        });
+        if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
+        entriesCache = [];
+        await loadEntries();
+        statusEl.textContent = flagged ? "Flagged." : "Flag removed.";
+      } catch (err) {
+        statusEl.textContent = `Flag update failed: ${err.message}`;
       }
     }
 
@@ -1012,7 +1110,7 @@
         return;
       }
 
-      filtered.forEach((entry, idx) => {
+      filtered.forEach((entry) => {
         const card = document.createElement("div");
         card.className = "entry-card";
         const dateStr = new Date(entry.created_at).toLocaleString();
@@ -1020,27 +1118,148 @@
         const sentimentBadge = entry.sentiment_label
           ? `<span class="badge ${sentimentClass}">${entry.sentiment_label}${entry.sentiment_score ? ` (${Math.round(entry.sentiment_score * 100)}%)` : ""}</span>`
           : "";
+        const memoryType = entry.memory_type || "event";
+        const options = ["event", "reflection", "preference", "identity", "project"];
+        const optionsHtml = options.map((opt) => `<option value="${opt}" ${opt === memoryType ? "selected" : ""}>${opt}</option>`).join("");
+        const topicsHtml = (entry.topics || []).map((t) => `<span class="pill">${t}</span>`).join("") || '<span class="muted">No topics</span>';
+        const titleLine = entry.title ? `<div class="small muted">${entry.title}</div>` : "";
+        const fullText = entry.content || entry.preview || "—";
+        const flaggedPill = entry.is_flagged
+          ? `<span class="pill flag-pill">Flagged${entry.flagged_reason ? `: ${entry.flagged_reason}` : ""}</span>`
+          : "";
 
         card.innerHTML = `
           <div class="entry-header">
-            <div><strong>${dateStr}</strong></div>
+            <div><strong>${dateStr}</strong>${titleLine}</div>
             <div>${sentimentBadge}</div>
           </div>
           <div class="entry-body">
             <div>${entry.summary || entry.preview || "—"}</div>
-            <div style="margin-top:6px;">${(entry.topics || []).map((t) => `<span class="pill">${t}</span>`).join("") || '<span class="muted">No topics</span>'}</div>
-            <div class="expand" data-idx="${idx}">Toggle details</div>
-            <div class="entry-meta hidden" id="meta-${idx}">
-              <div><strong>Full text:</strong> ${entry.preview || "—"}</div>
-              <div><strong>People/Places:</strong> ${(entry.people || []).join(", ") || "—"} / ${(entry.places || []).join(", ") || "—"}</div>
+            <div style="margin-top:6px;">${topicsHtml}</div>
+            <div class="expand" data-entry="${entry.id}">Toggle details</div>
+            <div class="entry-meta hidden" id="meta-${entry.id}">
+              <div class="trust-row">
+                <span class="pill">Confidence: ${formatPercent(entry.confidence_score)}</span>
+                <span class="pill">Confirmed: ${formatDate(entry.last_confirmed_at)}</span>
+                <span class="pill">Updated: ${formatDate(entry.updated_at)}</span>
+                ${flaggedPill}
+              </div>
+              <div><strong>Memory type:</strong> ${memoryType}</div>
+              <div><strong>Full text:</strong> ${fullText}</div>
+              <div><strong>People/Places:</strong> ${joinList(entry.people)} / ${joinList(entry.places)}</div>
+              <div><strong>Tags:</strong> ${joinList(entry.tags)}</div>
               <div><strong>Word count:</strong> ${entry.word_count ?? "-"}</div>
+              <div class="entry-actions">
+                <button class="edit-btn" data-entry="${entry.id}">Edit</button>
+                <button class="confirm-btn primary" data-entry="${entry.id}">Confirm memory</button>
+                <button class="flag-btn" data-entry="${entry.id}">${entry.is_flagged ? "Unflag" : "Flag as incorrect"}</button>
+              </div>
+              <div class="entry-edit hidden" id="edit-${entry.id}">
+                <div class="row">
+                  <div>
+                    <label>Title</label>
+                    <input type="text" name="title" />
+                  </div>
+                  <div>
+                    <label>Memory type</label>
+                    <select name="memory_type">
+                      ${optionsHtml}
+                    </select>
+                  </div>
+                </div>
+                <label>Summary</label>
+                <textarea name="summary" rows="2"></textarea>
+                <label>Text</label>
+                <textarea name="content" rows="4"></textarea>
+                <div class="row">
+                  <div>
+                    <label>Tags (comma separated)</label>
+                    <input type="text" name="tags" />
+                  </div>
+                  <div>
+                    <label>People (comma separated)</label>
+                    <input type="text" name="people" />
+                  </div>
+                  <div>
+                    <label>Places (comma separated)</label>
+                    <input type="text" name="places" />
+                  </div>
+                </div>
+                <div class="actions">
+                  <button class="save-btn primary" data-entry="${entry.id}">Save</button>
+                  <button class="cancel-btn" data-entry="${entry.id}">Cancel</button>
+                </div>
+              </div>
+              <div class="entry-status" id="status-${entry.id}"></div>
             </div>
           </div>
         `;
+
+        const meta = card.querySelector(`#meta-${entry.id}`);
+        const editForm = card.querySelector(`#edit-${entry.id}`);
+        const statusEl = card.querySelector(`#status-${entry.id}`);
+
+        const titleInput = editForm.querySelector('input[name="title"]');
+        const memorySelect = editForm.querySelector('select[name="memory_type"]');
+        const summaryInput = editForm.querySelector('textarea[name="summary"]');
+        const contentInput = editForm.querySelector('textarea[name="content"]');
+        const tagsInput = editForm.querySelector('input[name="tags"]');
+        const peopleInput = editForm.querySelector('input[name="people"]');
+        const placesInput = editForm.querySelector('input[name="places"]');
+
+        titleInput.value = entry.title || "";
+        memorySelect.value = memoryType;
+        summaryInput.value = entry.summary || "";
+        contentInput.value = entry.content || entry.preview || "";
+        tagsInput.value = (entry.tags || []).join(", ");
+        peopleInput.value = (entry.people || []).join(", ");
+        placesInput.value = (entry.places || []).join(", ");
+
         card.querySelector(".expand").addEventListener("click", () => {
-          const meta = document.getElementById(`meta-${idx}`);
           meta.classList.toggle("hidden");
         });
+
+        card.querySelector(".edit-btn").addEventListener("click", () => {
+          editForm.classList.toggle("hidden");
+          statusEl.textContent = "";
+        });
+
+        card.querySelector(".cancel-btn").addEventListener("click", () => {
+          editForm.classList.add("hidden");
+          statusEl.textContent = "";
+        });
+
+        card.querySelector(".save-btn").addEventListener("click", async () => {
+          const payload = {
+            title: titleInput.value.trim(),
+            summary: summaryInput.value.trim(),
+            content: contentInput.value.trim(),
+            tags: parseCommaList(tagsInput.value),
+            people: parseCommaList(peopleInput.value),
+            places: parseCommaList(placesInput.value),
+            memory_type: memorySelect.value,
+          };
+          const ok = await updateEntry(entry.id, payload, statusEl);
+          if (ok) {
+            editForm.classList.add("hidden");
+          }
+        });
+
+        card.querySelector(".confirm-btn").addEventListener("click", async () => {
+          await confirmEntry(entry.id, statusEl);
+        });
+
+        card.querySelector(".flag-btn").addEventListener("click", async () => {
+          if (entry.is_flagged) {
+            if (!window.confirm("Remove the incorrect flag for this memory?")) return;
+            await flagEntry(entry.id, null, statusEl, false);
+            return;
+          }
+          const reason = window.prompt("Why is this memory incorrect or low-confidence?");
+          if (reason === null) return;
+          await flagEntry(entry.id, reason, statusEl, true);
+        });
+
         timelineList.appendChild(card);
       });
     }

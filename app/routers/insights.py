@@ -26,6 +26,8 @@ class EntryPreview(BaseModel):
     id: str
     created_at: datetime
     updated_at: datetime
+    title: Optional[str] = None
+    content: Optional[str] = None
     preview: str
     summary: Optional[str] = None
     topics: List[str] = Field(default_factory=list)
@@ -41,6 +43,8 @@ class EntryPreview(BaseModel):
     source: Optional[str] = None
     confidence_score: Optional[float] = None
     last_confirmed_at: Optional[datetime] = None
+    is_flagged: bool = False
+    flagged_reason: Optional[str] = None
 
 
 class EntriesPerDay(BaseModel):
@@ -141,6 +145,8 @@ def list_entries(
                 id=entry.id,
                 created_at=entry.created_at,
                 updated_at=entry.updated_at,
+                title=getattr(entry, "title", None),
+                content=getattr(entry, "content", None),
                 preview=preview_text,
                 summary=entry.summary,
                 topics=_split(entry.topics),
@@ -156,6 +162,8 @@ def list_entries(
                 source=_source(entry),
                 confidence_score=_confidence(entry),
                 last_confirmed_at=getattr(entry, "last_confirmed_at", None),
+                is_flagged=bool(getattr(entry, "is_flagged", False)),
+                flagged_reason=getattr(entry, "flagged_reason", None),
             )
         )
 

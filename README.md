@@ -7,6 +7,7 @@ A personal life-story memory tool: record voice notes, transcribe with OpenAI, a
 - Capture: `POST /entries` accepts audio (`multipart/form-data`) or text; audio is transcribed with `gpt-4o-transcribe`.
 - Analysis: OpenAI (`gpt-4o-mini`) produces summary, themes, topics, sentiment (label + score), people/places, emotions, memory chunks, word count; embeddings (`text-embedding-3-small`) stored for retrieval.
 - Retrieval: semantic search powers Q&A and conversation grounded only in stored entries.
+- Review workflow: edit entries, confirm memories to boost confidence, and flag incorrect items with reasons.
 - Recaps: weekly/monthly recaps synthesized from local stats + entry snippets.
 - Persistence: SQLite via SQLModel (`ltm.db` by default) with Alembic migrations.
 - Frontend (`frontend/index.html`) with auth and three tabs:
@@ -67,12 +68,16 @@ API base: `http://127.0.0.1:8000`
 ## Frontend
 - Open `frontend/index.html` in your browser.
 - **Capture tab:** click “Start Recording”, then “Stop & Save”. Audio posts to `http://localhost:8000/entries` and shows the analysis response.
+- **Timeline tab:** expand an entry to edit, confirm, or flag it and see trust indicators (confidence/last confirmed/updated).
 - **Insights & Q&A tab:** automatically fetches `/insights/entries` and `/insights/summary`, and lets you ask questions via `/insights/query`.
 
 ## API Quick Reference
 - `POST /auth/register` – `{ "email": "...", "password": "..." }` → returns access token + user info.
 - `POST /auth/login` – `{ "email": "...", "password": "..." }` → returns access token + user info.
 - `POST /entries` – Form data: `file` (audio) or `text` (string). Returns stored entry info + analysis.
+- `PATCH /entries/{id}` – Edit title/content/tags/people/places/memory_type/summary.
+- `POST /entries/{id}/confirm` – Mark an entry as confirmed (bumps confidence, sets last_confirmed_at).
+- `POST /entries/{id}/flag` – Flag/unflag an entry with an optional reason.
 - `GET /prompt/daily` – Returns a generated daily reflection prompt.
 - `GET /insights/entries` – Entry previews for the Insights tab.
 - `GET /insights/summary` – Aggregate stats.
@@ -101,6 +106,17 @@ API base: `http://127.0.0.1:8000`
 ## Tests
 - Basic pytest suite exercises entry creation, insights summary, and Q&A (`tests/test_api.py`).
 - Run with: `pytest`
+
+## Manual UI checks
+- Timeline: open an entry, click Edit, update title/content/tags, Save → UI + `/insights/entries` reflect changes.
+- Timeline: click Confirm memory → confidence/last confirmed update in detail view.
+- Timeline: flag an entry with a reason → badge shows flagged status and reason.
+- Refresh the page → edits and trust indicators persist.
+
+## Screenshots (placeholders)
+- Timeline edit mode: `docs/screenshots/timeline-edit.png`
+- Confirm memory action: `docs/screenshots/confirm-memory.png`
+- Flagged memory state: `docs/screenshots/flag-memory.png`
 
 ## Deployment guide
 - See `docs/deployment_render.md` for a free-tier-friendly Render + Postgres setup.

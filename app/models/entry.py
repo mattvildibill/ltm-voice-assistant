@@ -69,6 +69,8 @@ class Entry(SQLModel, table=True):
         sa_column=Column(String(32), nullable=False, index=True),
     )
     last_confirmed_at: Optional[datetime] = None
+    is_flagged: bool = Field(default=False)
+    flagged_reason: Optional[str] = None
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
