@@ -1,0 +1,13 @@
+file '/Users/mattvildibill/Projects/ltm-voice-assistant/products/weekly-video/032a1a27-3f49-4e9e-9836-a05d641a5a8c/frame_01.png'
+duration 5.00
+file '/Users/mattvildibill/Projects/ltm-voice-assistant/products/weekly-video/032a1a27-3f49-4e9e-9836-a05d641a5a8c/frame_02.png'
+duration 5.00
+file '/Users/mattvildibill/Projects/ltm-voice-assistant/products/weekly-video/032a1a27-3f49-4e9e-9836-a05d641a5a8c/frame_03.png'
+duration 5.00
+file '/Users/mattvildibill/Projects/ltm-voice-assistant/products/weekly-video/032a1a27-3f49-4e9e-9836-a05d641a5a8c/frame_04.png'
+duration 5.00
+file '/Users/mattvildibill/Projects/ltm-voice-assistant/products/weekly-video/032a1a27-3f49-4e9e-9836-a05d641a5a8c/frame_05.png'
+duration 5.00
+file '/Users/mattvildibill/Projects/ltm-voice-assistant/products/weekly-video/032a1a27-3f49-4e9e-9836-a05d641a5a8c/frame_06.png'
+duration 5.00
+file '/Users/mattvildibill/Projects/ltm-voice-assistant/products/weekly-video/032a1a27-3f49-4e9e-9836-a05d641a5a8c/frame_06.png'

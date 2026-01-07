@@ -1,0 +1,66 @@
+{
+  "job_id": "032a1a27-3f49-4e9e-9836-a05d641a5a8c",
+  "user_id": "default-user",
+  "product_type": "weekly_video",
+  "status": "complete",
+  "created_at": "2026-01-06T00:41:29.730989",
+  "updated_at": "2026-01-06T00:41:43.169712",
+  "output_path": "products/weekly-video/032a1a27-3f49-4e9e-9836-a05d641a5a8c/weekly_video.mp4",
+  "error": null,
+  "metadata": {
+    "title": "Weekly Memory Recap",
+    "duration": 30,
+    "slides": [
+      {
+        "title": "Weekly Memory Recap",
+        "subtitle": "2025-12-30 to 2026-01-06",
+        "lines": [
+          "8 entries captured"
+        ]
+      },
+      {
+        "title": "Summary",
+        "lines": [
+          "This week was all about focus and growth. You tackled challenges with mindfulness and confidence, leading to some great achievements."
+        ]
+      },
+      {
+        "title": "Highlights",
+        "lines": [
+          "- A focused block of deep work made me feel sharp and in control.",
+          "- I paused for a few deep breaths before starting a tough task.",
+          "- The key win was shipping a UI cleanup on the chat experience with Taylor."
+        ]
+      },
+      {
+        "title": "Themes",
+        "lines": [
+          "Topics: prompt-qa, mindfulness, confidence",
+          "People: No people tagged",
+          "Places: No places tagged"
+        ]
+      },
+      {
+        "title": "Mood",
+        "lines": [
+          "Top emotions: Neutral",
+          "Average sentiment: 0.78"
+        ]
+      },
+      {
+        "title": "Looking Ahead",
+        "lines": [
+          "Reflect on these moments as you move forward."
+        ]
+      }
+    ],
+    "scene_prompts": [
+      "Flat pastel cartoon illustration, soft gradients, minimal shading, clean shapes, 2D, wide 16:9 composition, no text, no captions, no logos, no watermarks. Recurring character in every scene: friendly androgynous adult, short wavy hair, warm teal sweater, expressive eyes, calm smile. Keep character design consistent. Scene: The character reviews a weekly calendar on a desk, soft icons floating around (hearts, stars, speech bubbles). Date range: 2025-12-30 to 2026-01-06.",
+      "Flat pastel cartoon illustration, soft gradients, minimal shading, clean shapes, 2D, wide 16:9 composition, no text, no captions, no logos, no watermarks. Recurring character in every scene: friendly androgynous adult, short wavy hair, warm teal sweater, expressive eyes, calm smile. Keep character design consistent. Scene: The character reflects in a cozy room, surrounded by abstract icons representing prompt-qa, mindfulness, confidence.",
+      "Flat pastel cartoon illustration, soft gradients, minimal shading, clean shapes, 2D, wide 16:9 composition, no text, no captions, no logos, no watermarks. Recurring character in every scene: friendly androgynous adult, short wavy hair, warm teal sweater, expressive eyes, calm smile. Keep character design consistent. Scene: A collage of small vignettes around the character hinting at A focused block of deep work made me feel sharp, friendly and uplifting.",
+      "Flat pastel cartoon illustration, soft gradients, minimal shading, clean shapes, 2D, wide 16:9 composition, no text, no captions, no logos, no watermarks. Recurring character in every scene: friendly androgynous adult, short wavy hair, warm teal sweater, expressive eyes, calm smile. Keep character design consistent. Scene: The character connects threads between icons for friends and family and cozy places, with gentle pastel lines.",
+      "Flat pastel cartoon illustration, soft gradients, minimal shading, clean shapes, 2D, wide 16:9 composition, no text, no captions, no logos, no watermarks. Recurring character in every scene: friendly androgynous adult, short wavy hair, warm teal sweater, expressive eyes, calm smile. Keep character design consistent. Scene: The character sits beneath a sky gradient representing mood, with symbols for steady calm.",
+      "Flat pastel cartoon illustration, soft gradients, minimal shading, clean shapes, 2D, wide 16:9 composition, no text, no captions, no logos, no watermarks. Recurring character in every scene: friendly androgynous adult, short wavy hair, warm teal sweater, expressive eyes, calm smile. Keep character design consistent. Scene: The character looks toward a sunrise path, hopeful and calm, embodying the closing thought: Reflect on these moments as you move forward.."
+    ]
+  }
+}

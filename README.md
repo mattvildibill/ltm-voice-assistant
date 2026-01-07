@@ -3,7 +3,7 @@
 A personal life-story memory tool: record voice notes, transcribe with OpenAI, analyze them into structured memories, and explore them via a timeline, insights, recaps, and chat grounded only in your own entries.
 
 ## Features
-- FastAPI backend with CORS for local dev + JWT auth.
+- FastAPI backend with CORS for local dev in single-user mode.
 - Capture: `POST /entries` accepts audio (`multipart/form-data`) or text; audio is transcribed with `gpt-4o-transcribe`.
 - Analysis: OpenAI (`gpt-4o-mini`) produces summary, themes, topics, sentiment (label + score), people/places, emotions, memory chunks, word count; embeddings (`text-embedding-3-small`) stored for retrieval.
 - Background processing: analysis + embeddings run asynchronously; entries report `processing_status`.
@@ -11,10 +11,11 @@ A personal life-story memory tool: record voice notes, transcribe with OpenAI, a
 - Review workflow: edit entries, confirm memories to boost confidence, and flag incorrect items with reasons.
 - Recaps: weekly/monthly recaps synthesized from local stats + entry snippets.
 - Persistence: SQLite via SQLModel (`ltm.db` by default) with Alembic migrations.
-- Frontend (`frontend/index.html`) with auth and three tabs:
+- Frontend (`frontend/index.html`) with four tabs:
   - **Capture**: recorder + recent entries.
   - **Timeline**: filters (7/30/all) + expandable entry cards with sentiment and topics.
   - **Insights & Chat**: summary stats with entries/day chart, weekly recap, and chat grounded in your memories.
+  - **Engine**: diagnostic view of categorization signals, retrieval scoring, and pipeline details.
 - Daily prompt helper at `GET /prompt/daily`.
  
 ### Insights endpoints (new)
@@ -43,8 +44,8 @@ cd /home/mattv/Projects/ltm-lifestory
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install fastapi uvicorn[standard] sqlmodel python-dotenv openai psycopg[binary]
-# Additional tooling (migrations/tests/auth):
-pip install alembic pytest pydantic-settings passlib[bcrypt] python-jose
+# Additional tooling (migrations/tests):
+pip install alembic pytest pydantic-settings
 # Weekly video generation:
 pip install pillow
 ```
@@ -53,7 +54,6 @@ Create a `.env` file:
 ```
 OPENAI_API_KEY=your_key_here
 # Optional: DATABASE_URL=sqlite:///./ltm.db
-# JWT_SECRET_KEY=dev-secret-change-me
 # ALLOWED_ORIGINS=http://localhost:8000
 ```
 
@@ -75,8 +75,6 @@ API base: `http://127.0.0.1:8000`
 - **Insights & Q&A tab:** automatically fetches `/insights/entries` and `/insights/summary`, and lets you ask questions via `/insights/query`.
 
 ## API Quick Reference
-- `POST /auth/register` – `{ "email": "...", "password": "..." }` → returns access token + user info.
-- `POST /auth/login` – `{ "email": "...", "password": "..." }` → returns access token + user info.
 - `POST /entries` – Form data: `file` (audio) or `text` (string). Returns stored entry info + analysis.
 - `PATCH /entries/{id}` – Edit title/content/tags/people/places/memory_type/summary.
 - `POST /entries/{id}/confirm` – Mark an entry as confirmed (bumps confidence, sets last_confirmed_at).
@@ -88,7 +86,7 @@ API base: `http://127.0.0.1:8000`
 - `POST /conversation/respond` – Send a conversational message with history; returns a grounded reply and referenced entry ids.
 - `GET /insights/weekly` – Weekly recap (summary, themes, highlights, mood trajectory).
 - `GET /insights/monthly` – Monthly recap (summary, themes, highlights, mood trajectory).
-- `POST /products/weekly-video` – Generate a 30s weekly recap video (returns job id).
+- `POST /products/weekly-video` – Generate a 10-15s weekly recap video (body optional: `{ "duration": 10 }` or `{ "duration": 15 }`, returns job id).
 - `GET /products/{job_id}` – Check render status.
 - `GET /products/{job_id}/download` – Download the generated MP4.
 - `GET /health` – Basic health check.
@@ -98,12 +96,11 @@ API base: `http://127.0.0.1:8000`
 - The backend uses OpenAI; make sure the `.env` file is loaded before running.
 - `ltm.db` is ignored by git; delete it if you want a fresh database.
 - Update CORS or host settings in `main.py` if you deploy beyond local dev.
-- Multi-user scoping: authenticate via `/auth/register` or `/auth/login` and include the `Authorization: Bearer <token>` header on API requests. The frontend handles this automatically.
 - Weekly videos require Pillow + ffmpeg installed to render scenes and MP4 output, plus OpenAI image generation.
 
 ## Configuration
 - Managed via Pydantic settings in `app/core/config.py` (loads `.env`).
-- Key env vars: `OPENAI_API_KEY`, `DATABASE_URL` (defaults to `sqlite:///./ltm.db`), `ENVIRONMENT`, `JWT_SECRET_KEY`, `ALLOWED_ORIGINS`.
+- Key env vars: `OPENAI_API_KEY`, `DATABASE_URL` (defaults to `sqlite:///./ltm.db`), `ENVIRONMENT`, `ALLOWED_ORIGINS`.
 
 ## Database migrations
 - Alembic is configured (`alembic.ini`, `migrations/`).
@@ -135,6 +132,19 @@ API base: `http://127.0.0.1:8000`
   python scripts/seed_fake_year.py --wipe  # wipes entries first
   ```
   Data is written directly to the DB, so ensure Alembic has run and your `.env`/venv are loaded. 
+
+- Reset and seed random prompt/answer pairs (great for timeline + chat demos):
+  ```bash
+  python scripts/reset_and_seed_random_qa.py --wipe --count 200
+  ```
+
+## Seeding cohesive data (OpenAI)
+- Generate a single-person, story-linked year of prompt/answer entries via OpenAI:
+  ```bash
+  python scripts/reset_and_seed_random_qa.py --wipe --count 365 --days 365 --openai
+  ```
+  Requires `OPENAI_API_KEY` in your `.env`. This mode builds a story bible (names, places, pets, foods)
+  and embeds each entry for retrieval.
 
 ## Memory schema
 - Memory types (`event`, `reflection`, `preference`, `identity`, `project`) and normalized fields are documented in `docs/memory_schema.md`.

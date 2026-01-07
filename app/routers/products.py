@@ -23,12 +23,20 @@ class ProductJobResponse(BaseModel):
     download_url: Optional[str] = None
 
 
+class WeeklyVideoRequest(BaseModel):
+    duration: Optional[int] = None
+
+
 @router.post("/weekly-video", response_model=ProductJobResponse)
 def create_weekly_video(
     background_tasks: BackgroundTasks,
     user_id: str = Depends(get_current_user_id),
+    payload: WeeklyVideoRequest = None,
 ):
-    job = product_service.create_weekly_video_job(user_id, background_tasks)
+    duration = payload.duration if payload and payload.duration is not None else 15
+    if duration not in (10, 15):
+        raise HTTPException(status_code=400, detail="Duration must be 10 or 15 seconds.")
+    job = product_service.create_weekly_video_job(user_id, background_tasks, duration)
     payload = job.to_dict()
     payload["download_url"] = f"/products/{job.job_id}/download"
     return payload

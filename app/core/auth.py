@@ -1,22 +1,16 @@
-from fastapi import Header, HTTPException, status
+from typing import Optional
 
-from app.core.security import decode_access_token
+from fastapi import Header
+
+DEFAULT_USER_ID = "default-user"
 
 
-def get_current_user_id(authorization: str | None = Header(default=None)) -> str:
+def get_current_user_id(
+    x_user_id: Optional[str] = Header(default=None, alias="X-User-Id")
+) -> str:
     """
-    Resolve the current user identifier from Authorization bearer tokens.
+    Single-user mode: default to a shared user id unless a header overrides it.
     """
-    if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required.",
-        )
-    token = authorization.split(" ", 1)[1].strip()
-    user_id = decode_access_token(token)
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token.",
-        )
-    return user_id
+    if x_user_id and x_user_id.strip():
+        return x_user_id.strip()
+    return DEFAULT_USER_ID

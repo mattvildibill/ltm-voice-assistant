@@ -1,0 +1,58 @@
+{
+  "job_id": "32d5307d-122e-4cfc-9f2e-79470b1ee340",
+  "user_id": "default-user",
+  "product_type": "weekly_video",
+  "status": "complete",
+  "created_at": "2025-12-26T20:17:20.820217",
+  "updated_at": "2025-12-26T20:17:32.146046",
+  "output_path": "products/weekly-video/32d5307d-122e-4cfc-9f2e-79470b1ee340/weekly_video.mp4",
+  "error": null,
+  "metadata": {
+    "title": "Weekly Memory Recap",
+    "duration": 30,
+    "slides": [
+      {
+        "title": "Weekly Memory Recap",
+        "subtitle": "2025-12-19 to 2025-12-26",
+        "lines": [
+          "19 entries captured"
+        ]
+      },
+      {
+        "title": "Summary",
+        "lines": [
+          "This week was a blend of health, learning, and stress, filled with moments that shaped your days."
+        ]
+      },
+      {
+        "title": "Highlights",
+        "lines": [
+          "- curious day centered on health; key moment was weekend hike in the hills.",
+          "- content day centered on learning; key moment was trying a new recipe.",
+          "- stressed day centered on health; key moment was heads-down work sprint."
+        ]
+      },
+      {
+        "title": "Themes",
+        "lines": [
+          "Topics: daily-reflection, stressed, mindfulness",
+          "People: No people tagged",
+          "Places: No places tagged"
+        ]
+      },
+      {
+        "title": "Mood",
+        "lines": [
+          "Top emotions: Neutral",
+          "Average sentiment: 0.67"
+        ]
+      },
+      {
+        "title": "Looking Ahead",
+        "lines": [
+          "Reflect on these moments as you move forward."
+        ]
+      }
+    ]
+  }
+}

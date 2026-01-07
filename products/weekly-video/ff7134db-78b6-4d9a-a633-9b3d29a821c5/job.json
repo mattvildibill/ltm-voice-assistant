@@ -1,0 +1,66 @@
+{
+  "job_id": "ff7134db-78b6-4d9a-a633-9b3d29a821c5",
+  "user_id": "default-user",
+  "product_type": "weekly_video",
+  "status": "complete",
+  "created_at": "2025-12-26T20:24:36.466096",
+  "updated_at": "2025-12-26T20:24:49.939685",
+  "output_path": "products/weekly-video/ff7134db-78b6-4d9a-a633-9b3d29a821c5/weekly_video.mp4",
+  "error": null,
+  "metadata": {
+    "title": "Weekly Memory Recap",
+    "duration": 30,
+    "slides": [
+      {
+        "title": "Weekly Memory Recap",
+        "subtitle": "2025-12-19 to 2025-12-26",
+        "lines": [
+          "19 entries captured"
+        ]
+      },
+      {
+        "title": "Summary",
+        "lines": [
+          "Reflecting on a week filled with health, learning, and personal growth."
+        ]
+      },
+      {
+        "title": "Highlights",
+        "lines": [
+          "- curious day centered on health; key moment was weekend hike in the hills.",
+          "- content day centered on learning; key moment was trying a new recipe.",
+          "- stressed day centered on health; key moment was heads-down work sprint."
+        ]
+      },
+      {
+        "title": "Themes",
+        "lines": [
+          "Topics: daily-reflection, stressed, mindfulness",
+          "People: No people tagged",
+          "Places: No places tagged"
+        ]
+      },
+      {
+        "title": "Mood",
+        "lines": [
+          "Top emotions: Neutral",
+          "Average sentiment: 0.67"
+        ]
+      },
+      {
+        "title": "Looking Ahead",
+        "lines": [
+          "Embrace the moments that shape you."
+        ]
+      }
+    ],
+    "scene_prompts": [
+      "Flat pastel cartoon illustration, soft gradients, minimal shading, clean shapes, 2D, wide 16:9 composition, no text, no captions, no logos, no watermarks. Recurring character in every scene: friendly androgynous adult, short wavy hair, warm teal sweater, expressive eyes, calm smile. Keep character design consistent. Scene: The character reviews a weekly calendar on a desk, soft icons floating around (hearts, stars, speech bubbles). Date range: 2025-12-19 to 2025-12-26.",
+      "Flat pastel cartoon illustration, soft gradients, minimal shading, clean shapes, 2D, wide 16:9 composition, no text, no captions, no logos, no watermarks. Recurring character in every scene: friendly androgynous adult, short wavy hair, warm teal sweater, expressive eyes, calm smile. Keep character design consistent. Scene: The character reflects in a cozy room, surrounded by abstract icons representing daily-reflection, stressed, mindfulness.",
+      "Flat pastel cartoon illustration, soft gradients, minimal shading, clean shapes, 2D, wide 16:9 composition, no text, no captions, no logos, no watermarks. Recurring character in every scene: friendly androgynous adult, short wavy hair, warm teal sweater, expressive eyes, calm smile. Keep character design consistent. Scene: A collage of small vignettes around the character hinting at curious day centered on health; key moment was weekend hike, friendly and uplifting.",
+      "Flat pastel cartoon illustration, soft gradients, minimal shading, clean shapes, 2D, wide 16:9 composition, no text, no captions, no logos, no watermarks. Recurring character in every scene: friendly androgynous adult, short wavy hair, warm teal sweater, expressive eyes, calm smile. Keep character design consistent. Scene: The character connects threads between icons for friends and family and cozy places, with gentle pastel lines.",
+      "Flat pastel cartoon illustration, soft gradients, minimal shading, clean shapes, 2D, wide 16:9 composition, no text, no captions, no logos, no watermarks. Recurring character in every scene: friendly androgynous adult, short wavy hair, warm teal sweater, expressive eyes, calm smile. Keep character design consistent. Scene: The character sits beneath a sky gradient representing mood, with symbols for steady calm.",
+      "Flat pastel cartoon illustration, soft gradients, minimal shading, clean shapes, 2D, wide 16:9 composition, no text, no captions, no logos, no watermarks. Recurring character in every scene: friendly androgynous adult, short wavy hair, warm teal sweater, expressive eyes, calm smile. Keep character design consistent. Scene: The character looks toward a sunrise path, hopeful and calm, embodying the closing thought: Embrace the moments that shape you.."
+    ]
+  }
+}

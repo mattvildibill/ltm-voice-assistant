@@ -98,7 +98,11 @@ def _update_job(job: ProductJob, status: str, output_path: Optional[str] = None,
     _save_job(job)
 
 
-def create_weekly_video_job(user_id: str, background_tasks: BackgroundTasks) -> ProductJob:
+def create_weekly_video_job(
+    user_id: str,
+    background_tasks: BackgroundTasks,
+    duration: int,
+) -> ProductJob:
     PRODUCT_ROOT.mkdir(parents=True, exist_ok=True)
     WEEKLY_VIDEO_ROOT.mkdir(parents=True, exist_ok=True)
 
@@ -111,15 +115,16 @@ def create_weekly_video_job(user_id: str, background_tasks: BackgroundTasks) -> 
         status="queued",
         created_at=now,
         updated_at=now,
+        metadata={"duration": duration},
     )
     _save_job(job)
     _JOBS[job_id] = job
 
-    background_tasks.add_task(_run_weekly_video_job, job_id, user_id)
+    background_tasks.add_task(_run_weekly_video_job, job_id, user_id, duration)
     return job
 
 
-def _run_weekly_video_job(job_id: str, user_id: str) -> None:
+def _run_weekly_video_job(job_id: str, user_id: str, duration: int) -> None:
     job = get_job(job_id)
     if not job:
         return
@@ -127,7 +132,7 @@ def _run_weekly_video_job(job_id: str, user_id: str) -> None:
 
     try:
         output_dir = _job_dir(job_id)
-        result = generate_weekly_video(user_id=user_id, output_dir=output_dir)
+        result = generate_weekly_video(user_id=user_id, output_dir=output_dir, duration=duration)
         _update_job(
             job,
             status="complete",

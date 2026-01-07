@@ -1,4 +1,5 @@
 import json
+import re
 from collections import Counter
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Union
@@ -544,24 +545,22 @@ def _synthesize_prompt(entries: List[Entry], context: Dict) -> str:
     """
     Generate a conversational prompt tailored to recent topics/people/places.
     """
-    snippets = []
-    for entry in entries[:10]:
-        text = (entry.summary or entry.original_text or "").strip()
-        if len(text) > 140:
-            text = text[:137] + "..."
-        snippets.append(f"[{entry.created_at.date()}] {text}")
+    snippets = _build_prompt_snippets(entries, limit=6, max_len=140)
+    if not snippets:
+        return ""
 
     system_msg = (
-        "You are a warm, specific journaling coach. Suggest one question the user can answer. "
-        "Blend their recurring topics/people/places into the prompt, keep it brief, grounded, "
-        "and conversational. Encourage sensory detail and reflection, not generic advice."
+        "You are a warm, specific journaling coach. Write exactly one question the user can answer. "
+        "Use second-person language and keep it grounded in one concrete memory. "
+        "Avoid narrative responses, avoid combining multiple entries, and avoid repetition. "
+        "Keep it brief (one sentence) and end with a question mark. Output only the question."
     )
     user_content = (
         f"Top topics: {context.get('top_topics')}\n"
         f"Top people: {context.get('top_people')}\n"
         f"Top places: {context.get('top_places')}\n"
         f"Recent dates: {context.get('latest_dates')}\n\n"
-        "Recent snippets:\n" + "\n".join(snippets)
+        "Recent snippets (pick one to focus on):\n" + "\n".join(snippets)
     )
 
     try:
@@ -571,12 +570,63 @@ def _synthesize_prompt(entries: List[Entry], context: Dict) -> str:
                 {"role": "system", "content": system_msg},
                 {"role": "user", "content": user_content},
             ],
-            temperature=0.7,
+            temperature=0.4,
+            max_tokens=80,
         )
     except Exception:
         return ""
 
-    return resp.choices[0].message.content.strip() if resp.choices else ""
+    content = resp.choices[0].message.content if resp.choices else ""
+    return _clean_prompt_output(content)
+
+
+def _build_prompt_snippets(entries: List[Entry], limit: int, max_len: int) -> List[str]:
+    snippets = []
+    seen = set()
+    for entry in entries:
+        text = (
+            getattr(entry, "summary", None)
+            or getattr(entry, "title", None)
+            or getattr(entry, "content", None)
+            or getattr(entry, "original_text", None)
+            or ""
+        ).strip()
+        if not text:
+            continue
+        normalized = re.sub(r"\s+", " ", text).lower()
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        if len(text) > max_len:
+            text = text[: max_len - 3].rstrip() + "..."
+        snippets.append(f"[{entry.created_at.date()}] {text}")
+        if len(snippets) >= limit:
+            break
+    return snippets
+
+
+def _clean_prompt_output(text: str) -> str:
+    if not text:
+        return ""
+    cleaned = text.strip().strip("\"'").strip()
+    lines = [line.strip() for line in cleaned.splitlines() if line.strip()]
+    candidate = ""
+    for line in lines:
+        line = re.sub(r"^[-*\\d.)\\]]+\\s*", "", line)
+        if "?" in line:
+            candidate = line
+            break
+        if not candidate:
+            candidate = line
+    if not candidate or "?" not in candidate:
+        return ""
+    candidate = candidate.split("?")[0].rstrip() + "?"
+    if len(candidate) > 220:
+        candidate = candidate[:220].rstrip()
+        if not candidate.endswith("?"):
+            q_index = candidate.rfind("?")
+            candidate = candidate[: q_index + 1] if q_index != -1 else candidate.rstrip(".") + "?"
+    return candidate
 
 
 def _synthesize_recap(entries: List[Entry], stats: Dict) -> Tuple[str, List[str], List[str]]:

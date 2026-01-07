@@ -1,0 +1,11 @@
+{
+  "job_id": "653485ce-8c3c-46fd-adad-3bf2e9dbccb9",
+  "user_id": "default-user",
+  "product_type": "weekly_video",
+  "status": "failed",
+  "created_at": "2025-12-26T20:15:18.774333",
+  "updated_at": "2025-12-26T20:15:29.827784",
+  "output_path": null,
+  "error": "Command '['ffmpeg', '-y', '-f', 'concat', '-safe', '0', '-i', 'products/weekly-video/653485ce-8c3c-46fd-adad-3bf2e9dbccb9/frames.txt', '-vsync', 'vfr', '-pix_fmt', 'yuv420p', 'products/weekly-video/653485ce-8c3c-46fd-adad-3bf2e9dbccb9/video_silent.mp4']' returned non-zero exit status 254.",
+  "metadata": {}
+}

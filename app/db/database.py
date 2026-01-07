@@ -11,7 +11,6 @@ def init_db() -> None:
     """Create database tables on startup."""
     # Import here to avoid circular import issues
     from app.models.entry import Entry
-    from app.models.user import User
     SQLModel.metadata.create_all(engine)
 
 

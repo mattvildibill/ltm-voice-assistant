@@ -16,7 +16,8 @@ from app.services.openai_service import client
 
 CANVAS_WIDTH = 1280
 CANVAS_HEIGHT = 720
-DEFAULT_DURATION = 30
+DEFAULT_DURATION = 15
+WORDS_PER_SECOND = 2.4
 DEFAULT_VOICE = "alloy"
 IMAGE_MODEL = "gpt-image-1"
 
@@ -326,7 +327,7 @@ def _render_video_from_frames(
     )
 
 
-def _build_weekly_storyboard(user_id: str) -> Dict:
+def _build_weekly_storyboard(user_id: str, duration: int) -> Dict:
     cutoff = datetime.utcnow() - timedelta(days=7)
     with get_session() as session:
         entries = session.exec(
@@ -369,8 +370,9 @@ def _build_weekly_storyboard(user_id: str) -> Dict:
     def top_keys(counter: Dict[str, int], limit: int = 3) -> List[str]:
         return [k for k, _ in sorted(counter.items(), key=lambda item: item[1], reverse=True)[:limit]]
 
+    highlight_count = 2 if duration <= 15 else 3
     highlights = []
-    for entry in entries[:3]:
+    for entry in entries[:highlight_count]:
         text = (entry.summary or entry.original_text or "").strip().replace("\n", " ")
         if len(text) > 140:
             text = text[:137] + "..."
@@ -391,10 +393,14 @@ def _build_weekly_storyboard(user_id: str) -> Dict:
         "highlights": highlights,
     }
 
+    target_words = max(int(duration * WORDS_PER_SECOND), 20)
+    min_words = max(target_words - 6, 16)
+    max_words = max(target_words + 6, min_words + 4)
+
     prompt = (
-        "Create a 30 second weekly recap script for a user's personal memories. "
+        f"Create a {duration} second weekly recap script for a user's personal memories. "
         "Return JSON with keys: title, summary, highlights, themes, closing, script. "
-        "Script should be 70-85 words. Highlights and themes should be short phrases."
+        f"Script should be {min_words}-{max_words} words. Highlights and themes should be short phrases."
         f"\nStats: {stats}"
     )
 
@@ -442,7 +448,7 @@ def _build_weekly_storyboard(user_id: str) -> Dict:
         f"{closing}"
     )
 
-    script = _truncate_words(script, 85)
+    script = _truncate_words(script, max_words)
 
     date_range = f"{(cutoff.date()).isoformat()} to {datetime.utcnow().date().isoformat()}"
 
@@ -468,7 +474,17 @@ def _build_weekly_storyboard(user_id: str) -> Dict:
         {"title": "Looking Ahead", "lines": [closing]},
     ]
 
-    scene_prompts = _build_scene_prompts(stats, highlights, themes, closing, date_range)
+    if duration <= 15:
+        slides = [slides[0], slides[1], slides[2], slides[-1]]
+
+    scene_prompts = _build_scene_prompts(
+        stats,
+        highlights,
+        themes,
+        closing,
+        date_range,
+        max_scenes=len(slides),
+    )
 
     return {
         "slides": slides,
@@ -485,6 +501,7 @@ def _build_scene_prompts(
     themes: List[str],
     closing: str,
     date_range: str,
+    max_scenes: int,
 ) -> List[str]:
     topics = stats.get("top_topics") or []
     emotions = stats.get("top_emotions") or []
@@ -518,7 +535,7 @@ def _build_scene_prompts(
         f"hopeful and calm, embodying the closing thought: {closing_hint}.",
     ]
 
-    return scenes
+    return scenes[:max_scenes]
 
 
 def generate_weekly_video(
@@ -529,7 +546,7 @@ def generate_weekly_video(
 ) -> Dict:
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    plan = _build_weekly_storyboard(user_id)
+    plan = _build_weekly_storyboard(user_id, duration)
     slides = plan["slides"]
     script = plan["script"]
     scene_prompts = plan.get("scene_prompts") or []

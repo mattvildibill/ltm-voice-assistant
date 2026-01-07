@@ -189,7 +189,6 @@ def _run_analysis_pipeline(entry_id: str, user_id: str, text: str) -> None:
 async def process_entry(
     text: Optional[str],
     file: Optional[UploadFile],
-    user_id: str,
     source: Optional[str] = None,
     confidence_score: Optional[float] = None,
     user_id: str = "default-user",

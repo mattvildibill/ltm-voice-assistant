@@ -8,17 +8,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #060910;
-      --bg-2: #0c1222;
-      --panel: #0f1729;
-      --panel-2: #131d33;
-      --muted: #9fb2d7;
-      --text: #eaf0ff;
-      --accent: #6cf0c2;
-      --accent-2: #7aa8ff;
-      --border: #1b2945;
-      --border-2: #203356;
-      --shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      --bg: #f4f6f2;
+      --bg-2: #eef2ee;
+      --panel: #ffffff;
+      --panel-2: #f7f9f6;
+      --muted: #5f6e6a;
+      --text: #1b2422;
+      --accent: #7fb8a6;
+      --accent-2: #f0c58a;
+      --border: #dfe6e1;
+      --border-2: #d1d8d3;
+      --shadow: 0 12px 26px rgba(24, 34, 30, 0.08);
       --radius: 14px;
     }
 
@@ -27,9 +27,8 @@
     body {
       margin: 0;
       font-family: "Space Grotesk", "Helvetica Neue", sans-serif;
-      background: radial-gradient(circle at 20% 20%, rgba(108, 240, 194, 0.05), transparent 32%),
-                  radial-gradient(circle at 80% 0%, rgba(122, 168, 255, 0.08), transparent 30%),
-                  var(--bg);
+      font-size: 15px;
+      background: linear-gradient(180deg, #f6f7f4 0%, #eef3ef 60%, #e7eeea 100%);
       color: var(--text);
       min-height: 100vh;
       padding: 26px;
@@ -46,18 +45,22 @@
       pointer-events: none;
       position: fixed;
       inset: 0;
-      background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-image: linear-gradient(rgba(31, 36, 34, 0.05) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(31, 36, 34, 0.05) 1px, transparent 1px);
       background-size: 50px 50px;
-      opacity: 0.4;
+      opacity: 0.12;
       z-index: 0;
     }
 
-    h1, h2, h3, h4 { margin: 0; letter-spacing: 0.4px; }
-    p { margin: 0; color: var(--muted); line-height: 1.6; }
+    h1, h2, h3, h4 { margin: 0; letter-spacing: 0.2px; }
+    h1 { font-size: 28px; line-height: 1.15; }
+    h2 { font-size: 22px; line-height: 1.2; }
+    h3 { font-size: 18px; line-height: 1.25; }
+    h4 { font-size: 15px; line-height: 1.3; }
+    p { margin: 0; color: var(--muted); line-height: 1.6; font-size: 15px; }
     .muted { color: var(--muted); }
     .small { font-size: 14px; }
-    .eyebrow { text-transform: uppercase; letter-spacing: 1.6px; font-size: 12px; color: var(--accent-2); margin-bottom: 6px; }
+    .eyebrow { text-transform: uppercase; letter-spacing: 1.4px; font-size: 11px; color: var(--accent-2); margin-bottom: 6px; }
 
     .top-bar {
       display: flex;
@@ -69,6 +72,10 @@
       top: 0;
       z-index: 6;
       backdrop-filter: blur(12px);
+      padding: 8px 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(223, 230, 225, 0.8);
+      background: rgba(244, 246, 242, 0.75);
     }
     .top-bar .brand {
       display: flex;
@@ -83,6 +90,26 @@
       flex-wrap: wrap;
       align-items: center;
     }
+    .nav-links .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      padding: 6px 12px;
+      font-size: 13px;
+      letter-spacing: 0.2px;
+      box-shadow: none;
+    }
+    .nav-links .tab-btn:hover {
+      background: var(--panel);
+      border-color: var(--border);
+      color: var(--text);
+      transform: none;
+    }
+    .nav-links .nav-tab.active {
+      background: var(--panel);
+      border-color: var(--border);
+      color: var(--text);
+    }
     .nav-links a {
       color: var(--muted);
       text-decoration: none;
@@ -94,22 +121,26 @@
     .nav-links a:hover {
       color: var(--text);
       border-color: var(--border);
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(127, 184, 166, 0.12);
     }
-    .nav-cta {
+    .nav-links .nav-cta {
       padding: 8px 14px;
       border-radius: 999px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #041023;
+      background: var(--accent);
+      color: var(--text);
       font-weight: 700;
-      text-decoration: none;
+      border-color: transparent;
+    }
+    .nav-links .nav-cta.active {
+      background: var(--accent);
+      color: var(--text);
     }
 
     .hero {
       position: relative;
       overflow: hidden;
       border: 1px solid var(--border);
-      background: linear-gradient(140deg, rgba(16, 27, 53, 0.9), rgba(12, 16, 30, 0.95));
+      background: linear-gradient(160deg, #ffffff 0%, #f3f6f2 100%);
       border-radius: 18px;
       padding: 26px;
       margin-bottom: 18px;
@@ -133,13 +164,13 @@
       width: 44px;
       height: 44px;
       border-radius: 14px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      background: var(--accent);
       display: grid;
       place-items: center;
-      color: #051021;
+      color: var(--text);
       font-weight: 700;
       letter-spacing: 1px;
-      box-shadow: 0 6px 30px rgba(108, 240, 194, 0.3);
+      box-shadow: 0 8px 20px rgba(127, 184, 166, 0.25);
     }
 
     .hero h1 { font-size: 30px; margin-bottom: 6px; }
@@ -155,7 +186,7 @@
     }
     .hero-actions .secondary {
       border: 1px solid var(--border-2);
-      background: rgba(255, 255, 255, 0.02);
+      background: var(--panel-2);
       color: var(--text);
       padding: 10px 14px;
       border-radius: 10px;
@@ -165,14 +196,25 @@
       gap: 6px;
     }
     .hero-actions .primary-link {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #041023;
+      background: var(--accent);
+      border: 1px solid transparent;
+      color: var(--text);
       padding: 10px 16px;
       border-radius: 10px;
       font-weight: 700;
       display: inline-flex;
       align-items: center;
       gap: 6px;
+    }
+    .hero-actions .tab-btn.active {
+      background: var(--accent);
+      border-color: transparent;
+      color: var(--text);
+    }
+    .hero-actions .secondary.tab-btn.active {
+      background: var(--panel-2);
+      border-color: var(--border-2);
+      color: var(--text);
     }
 
     .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
@@ -182,12 +224,12 @@
       gap: 6px;
       padding: 8px 12px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.04);
+      background: var(--panel-2);
       border: 1px solid var(--border);
-      color: #e6ecff;
+      color: var(--text);
       font-size: 13px;
     }
-    .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(108, 240, 194, 0.12); }
+    .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(127, 184, 166, 0.18); }
 
     .hero-panels {
       display: grid;
@@ -197,9 +239,12 @@
     }
     .hero-card {
       border: 1px solid var(--border);
-      background: rgba(12, 18, 34, 0.8);
+      background: var(--panel);
       border-radius: var(--radius);
       padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
     .hero-card h4 { margin-bottom: 6px; font-size: 16px; }
 
@@ -211,7 +256,7 @@
     }
     .access-field {
       border: 1px solid var(--border);
-      background: rgba(12, 18, 34, 0.75);
+      background: var(--panel-2);
       border-radius: 12px;
       padding: 12px;
     }
@@ -228,8 +273,8 @@
       border-radius: 10px;
       border: 1px solid var(--border);
       padding: 8px;
-      background: #0b1222;
-      color: #eaf0ff;
+      background: var(--panel);
+      color: var(--text);
       font-family: "Space Grotesk", "Helvetica Neue", sans-serif;
     }
 
@@ -246,8 +291,8 @@
       padding: 12px 18px;
       border-radius: 999px;
       border: 1px solid var(--border);
-      background: rgba(255, 255, 255, 0.02);
-      color: #e2e9ff;
+      background: var(--panel-2);
+      color: var(--text);
       cursor: pointer;
       transition: all 0.2s ease;
       font-weight: 600;
@@ -255,13 +300,32 @@
     }
     .tab-btn:hover { border-color: var(--border-2); }
     .tab-btn.active {
-      background: linear-gradient(135deg, #12203a, #0e1c33);
-      border-color: var(--accent-2);
-      box-shadow: 0 6px 24px rgba(122, 168, 255, 0.2);
+      background: rgba(127, 184, 166, 0.2);
+      border-color: var(--accent);
+      box-shadow: none;
     }
 
     .tab-content { display: none; }
     .tab-content.active { display: block; }
+
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 16px 0 12px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+    }
+    .section-divider::before,
+    .section-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .section-divider::before { max-width: 40px; }
 
     .section-grid {
       display: grid;
@@ -293,8 +357,8 @@
       padding: 6px 10px;
       border-radius: 999px;
       border: 1px solid var(--border-2);
-      background: rgba(108, 240, 194, 0.08);
-      color: var(--accent);
+      background: rgba(127, 184, 166, 0.18);
+      color: var(--text);
       font-weight: 600;
       font-size: 12px;
     }
@@ -303,8 +367,8 @@
       padding: 11px 16px;
       border-radius: 10px;
       border: 1px solid var(--border);
-      background: rgba(255, 255, 255, 0.04);
-      color: #f8fbff;
+      background: var(--panel-2);
+      color: var(--text);
       cursor: pointer;
       font-weight: 600;
       letter-spacing: 0.2px;
@@ -312,32 +376,12 @@
     }
     button:hover:not([disabled]) { border-color: var(--border-2); transform: translateY(-1px); }
     button.primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      background: var(--accent);
       border-color: transparent;
-      color: #041023;
-      box-shadow: 0 8px 30px rgba(108, 240, 194, 0.25);
+      color: var(--text);
+      box-shadow: none;
     }
     button[disabled] { opacity: 0.6; cursor: default; transform: none; box-shadow: none; }
-
-    .user-input {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--text);
-      font-weight: 600;
-      letter-spacing: 0.2px;
-    }
-    .auth-card {
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      padding: 14px;
-      background: rgba(8, 14, 26, 0.8);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-    }
-    .auth-card .user-input { margin-bottom: 8px; }
-    .auth-card .controls { justify-content: space-between; }
 
     .controls {
       display: flex;
@@ -349,41 +393,42 @@
     #log {
       white-space: pre-wrap;
       font-size: 14px;
-      background: #0b101d;
+      background: var(--panel-2);
       padding: 12px;
       border-radius: 12px;
       max-height: 200px;
       overflow-y: auto;
       border: 1px solid var(--border);
-      color: #cfdaf4;
+      color: var(--text);
     }
     .log-wrap { margin-top: 8px; }
 
-    .callouts { display: grid; gap: 8px; margin-top: 10px; }
+    .callouts { display: grid; gap: 10px; margin-top: 12px; }
     .callout {
-      padding: 10px 12px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px dashed var(--border-2);
+      padding: 12px 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-left: 4px solid rgba(127, 184, 166, 0.6);
       border-radius: 12px;
       font-size: 14px;
-      color: #d5dffa;
+      color: var(--text);
     }
     .prompt-box {
       margin-top: 12px;
       padding: 12px;
       border-radius: 12px;
-      border: 1px dashed var(--border-2);
-      background: rgba(108, 240, 194, 0.06);
+      border: 1px solid var(--border-2);
+      background: var(--panel-2);
     }
     .prompt-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .prompt-text { margin-top: 6px; color: #eaf4ff; line-height: 1.5; }
+    .prompt-text { margin-top: 6px; color: var(--text); line-height: 1.5; }
 
     .pill {
       display: inline-block;
       padding: 6px 10px;
-      background: rgba(122, 168, 255, 0.12);
+      background: rgba(127, 184, 166, 0.16);
       border: 1px solid var(--border-2);
-      color: #e8edff;
+      color: var(--text);
       border-radius: 999px;
       margin: 0 6px 6px 0;
       font-size: 12px;
@@ -396,33 +441,33 @@
       font-weight: 700;
       border: 1px solid var(--border);
     }
-    .badge.positive { background: rgba(108, 240, 194, 0.12); color: var(--accent); border-color: rgba(108, 240, 194, 0.3); }
-    .badge.neutral { background: rgba(255, 255, 255, 0.04); color: #dbe6ff; border-color: var(--border); }
-    .badge.negative { background: rgba(255, 123, 123, 0.12); color: #ffb4b4; border-color: rgba(255, 123, 123, 0.3); }
+    .badge.positive { background: rgba(127, 184, 166, 0.18); color: var(--text); border-color: rgba(127, 184, 166, 0.35); }
+    .badge.neutral { background: rgba(127, 184, 166, 0.12); color: var(--text); border-color: var(--border); }
+    .badge.negative { background: rgba(196, 89, 89, 0.12); color: #9e4e4e; border-color: rgba(196, 89, 89, 0.35); }
 
     .entry-card {
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 12px;
-      background: var(--panel-2);
+      background: var(--panel);
       margin-bottom: 12px;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
     }
     .entry-header { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
-    .entry-body { margin-top: 8px; color: #dbe6ff; }
+    .entry-body { margin-top: 8px; color: var(--text); }
     .entry-meta { font-size: 13px; color: var(--muted); line-height: 1.5; }
     .expand { cursor: pointer; color: var(--accent); font-size: 13px; margin-top: 6px; display: inline-block; }
     .trust-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 6px; }
     .entry-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-    .entry-edit { margin-top: 10px; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.02); }
+    .entry-edit { margin-top: 10px; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel-2); }
     .entry-edit label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-top: 10px; }
     .entry-edit input,
     .entry-edit select,
     .entry-edit textarea {
       width: 100%;
       margin-top: 6px;
-      background: #0c1325;
-      color: #eaefff;
+      background: var(--panel);
+      color: var(--text);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 8px;
@@ -430,19 +475,85 @@
     }
     .entry-edit .row { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
     .entry-edit .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-    .flag-pill { background: rgba(255, 123, 123, 0.12); color: #ffb4b4; border: 1px solid rgba(255, 123, 123, 0.3); }
+    .flag-pill { background: rgba(196, 89, 89, 0.12); color: #9e4e4e; border: 1px solid rgba(196, 89, 89, 0.35); }
     .entry-status { margin-top: 8px; font-size: 12px; color: var(--muted); }
 
     .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 12px; }
-    .filter-btn { background: rgba(255, 255, 255, 0.03); }
-    .filter-btn.active { background: rgba(108, 240, 194, 0.16); color: #042013; border-color: var(--accent); box-shadow: 0 6px 18px rgba(108, 240, 194, 0.2); }
+    .filter-btn { background: var(--panel-2); }
+    .filter-btn.active { background: rgba(127, 184, 166, 0.2); color: var(--text); border-color: var(--accent); box-shadow: none; }
 
     .stat-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 10px; margin: 10px 0; }
-    .stat { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .stat { background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
     .stat strong { display: block; margin-bottom: 4px; }
     .chart { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-    .sparkline { width: 100%; height: 90px; background: #0f1524; border: 1px solid var(--border-2); border-radius: 12px; padding: 8px; }
-    .recap-card { border: 1px solid var(--border-2); border-radius: 12px; padding: 12px; background: rgba(122, 168, 255, 0.06); margin-top: 10px; }
+    .sparkline { width: 100%; height: 90px; background: var(--panel-2); border: 1px solid var(--border-2); border-radius: 12px; padding: 8px; }
+    .recap-card { border: 1px solid var(--border-2); border-radius: 12px; padding: 12px; background: var(--panel); margin-top: 10px; }
+    .recap-toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .recap-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .select-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .select-field {
+      appearance: none;
+      background-color: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 34px 8px 12px;
+      font-weight: 600;
+      color: var(--text);
+      font-family: "Space Grotesk", "Helvetica Neue", sans-serif;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%),
+        linear-gradient(to right, var(--border), var(--border));
+      background-position:
+        calc(100% - 18px) 50%,
+        calc(100% - 12px) 50%,
+        calc(100% - 32px) 50%;
+      background-size: 6px 6px, 6px 6px, 1px 16px;
+      background-repeat: no-repeat;
+      min-width: 120px;
+    }
+    .recap-output {
+      margin-top: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      border-radius: 12px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .recap-metrics { display: flex; flex-wrap: wrap; gap: 8px; }
+    .recap-pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .recap-summary {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .recap-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+    .recap-list { display: grid; gap: 6px; font-size: 14px; color: var(--text); }
     .section-title {
       display: flex;
       align-items: center;
@@ -453,12 +564,6 @@
       font-size: 13px;
       color: var(--muted);
     }
-    .divider {
-      height: 1px;
-      background: var(--border);
-      margin: 18px 0;
-      opacity: 0.6;
-    }
     footer {
       margin-top: 32px;
       padding: 24px 0 10px;
@@ -466,13 +571,259 @@
       font-size: 13px;
       text-align: center;
     }
-    .video-card { border: 1px solid var(--border-2); border-radius: 12px; padding: 12px; background: rgba(108, 240, 194, 0.08); margin-top: 12px; }
-    .video-player { width: 100%; border-radius: 12px; border: 1px solid var(--border); margin-top: 10px; background: #0b1222; }
+    .video-card { border: 1px solid var(--border-2); border-radius: 12px; padding: 12px; background: var(--panel); margin-top: 12px; }
+    .video-player { width: 100%; border-radius: 12px; border: 1px solid var(--border); margin-top: 10px; background: var(--panel-2); }
     .download-link { display: inline-block; margin-top: 8px; color: var(--accent); text-decoration: none; }
     .download-link:hover { text-decoration: underline; }
+    .text-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-family: "Space Grotesk", "Helvetica Neue", sans-serif;
+    }
+    .prompt-candidate-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      margin-top: 12px;
+    }
+    .candidate-group {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      background: var(--panel-2);
+    }
+    .candidate-group h4 { margin: 0; }
+    .candidate-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .candidate-row {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+      cursor: pointer;
+    }
+    .candidate-row:hover { border-color: var(--border-2); box-shadow: 0 8px 16px rgba(24, 34, 30, 0.08); }
+    .candidate-row.is-selected { border-color: rgba(127, 184, 166, 0.6); background: rgba(127, 184, 166, 0.12); }
+    .candidate-row input { margin-top: 3px; }
+    .candidate-content { display: grid; gap: 6px; }
+    .candidate-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .candidate-meta-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .candidate-date { font-size: 12px; color: var(--muted); }
+    .candidate-summary {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .candidate-row.expanded .candidate-summary {
+      display: block;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    button.candidate-more {
+      border: none;
+      background: transparent;
+      padding: 0;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    button.candidate-more:hover { text-decoration: underline; transform: none; }
+    .badge.significant { background: rgba(127, 184, 166, 0.18); color: var(--text); border-color: rgba(127, 184, 166, 0.35); }
+    .badge.cinematic { background: rgba(221, 183, 111, 0.2); color: #9a6b2f; border-color: rgba(221, 183, 111, 0.4); }
+    .prompt-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .prompt-output {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      border-radius: 12px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .prompt-textarea {
+      width: 100%;
+      min-height: 200px;
+      resize: vertical;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 10px;
+      background: var(--panel);
+      color: var(--text);
+      font-family: "Space Grotesk", "Helvetica Neue", sans-serif;
+    }
+    .prompt-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .debug-panel {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      background: var(--panel);
+    }
+    .debug-panel summary { cursor: pointer; font-weight: 600; }
+    .debug-list {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+    .loading-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .error-banner {
+      border: 1px solid rgba(196, 89, 89, 0.35);
+      background: rgba(196, 89, 89, 0.12);
+      color: #9e4e4e;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 13px;
+    }
+
+    .engine-grid { grid-template-columns: 1.1fr 0.9fr; }
+    .pipeline-list {
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+      counter-reset: step;
+    }
+    .pipeline-list li {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+    .pipeline-list li::before {
+      content: counter(step);
+      counter-increment: step;
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .mini-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 12px 0;
+      opacity: 0.6;
+    }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .bar-list { display: grid; gap: 8px; margin-top: 6px; }
+    .bar-row {
+      display: grid;
+      grid-template-columns: minmax(90px, 120px) 1fr auto;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .bar-track {
+      height: 8px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+    }
+    .engine-lists {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+    .engine-sample { display: grid; gap: 10px; margin-top: 10px; }
+    .sample-item {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel-2);
+    }
+    .sample-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .sample-tags { margin-top: 6px; }
+    .mono {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      padding: 10px;
+      border-radius: 10px;
+      white-space: pre-wrap;
+    }
+    .engine-query {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      align-items: center;
+    }
 
     .chat-pane {
-      background: #0d1220;
+      background: var(--panel-2);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 12px;
@@ -490,11 +841,11 @@
       font-size: 15px;
       position: relative;
     }
-    .bubble.user { background: linear-gradient(135deg, #12243f, #0f1f34); margin-left: auto; color: #e8f1ff; }
-    .bubble.assistant { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); color: #e4eaf5; }
+    .bubble.user { background: rgba(127, 184, 166, 0.25); margin-left: auto; color: var(--text); }
+    .bubble.assistant { background: rgba(255, 255, 255, 0.6); border: 1px solid var(--border); color: var(--text); }
     .bubble-meta { font-size: 12px; color: var(--muted); margin-top: -2px; margin-bottom: 10px; }
     .chat-input { display: flex; gap: 10px; margin-top: 10px; }
-    .chat-input textarea { flex: 1; min-height: 80px; background: #0c1325; color: #eaefff; border: 1px solid var(--border); border-radius: 10px; padding: 10px; resize: vertical; }
+    .chat-input textarea { flex: 1; min-height: 80px; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 10px; resize: vertical; }
 
     textarea { width: 100%; }
     .hidden { display: none; }
@@ -502,7 +853,7 @@
     @media (max-width: 900px) {
       body { padding: 18px; }
       .top-bar { position: static; }
-      .capture-grid, .insights-grid { grid-template-columns: 1fr; }
+      .capture-grid, .insights-grid, .engine-grid { grid-template-columns: 1fr; }
       .hero-grid { grid-template-columns: 1fr; }
       .chat-pane { min-height: 220px; }
     }
@@ -517,11 +868,12 @@
         <span>Life Story</span>
       </div>
       <nav class="nav-links">
-        <a href="#capture">Capture</a>
-        <a href="#timeline">Timeline</a>
-        <a href="#insights">Insights</a>
+        <button class="tab-btn nav-tab active" data-tab="capture" type="button">Capture</button>
+        <button class="tab-btn nav-tab" data-tab="timeline" type="button">Timeline</button>
+        <button class="tab-btn nav-tab" data-tab="insights" type="button">Insights</button>
+        <button class="tab-btn nav-tab" data-tab="engine" type="button">Engine</button>
         <a href="#privacy">Privacy</a>
-        <a class="nav-cta" href="#capture">Start journaling</a>
+        <button class="tab-btn nav-cta" data-tab="capture" type="button">Start journaling</button>
       </nav>
     </header>
     <section class="hero">
@@ -534,15 +886,15 @@
               <h1>Your private memory companion, now ready for everyday use</h1>
               <p>Capture stories in seconds, keep an auditable timeline, and ask questions answered using only the entries you’ve stored.</p>
               <div class="hero-actions">
-                <a class="primary-link" href="#capture">Start your first entry</a>
-                <a class="secondary" href="#insights">View insights</a>
+                <button class="primary-link tab-btn" data-tab="capture" type="button">Start your first entry</button>
+                <button class="secondary tab-btn" data-tab="insights" type="button">View insights</button>
               </div>
             </div>
           </div>
           <div class="chip-row">
             <span class="chip"><span class="dot"></span> Records & transcribes audio</span>
             <span class="chip">Summaries, sentiment, topics & people/places</span>
-            <span class="chip">Account-secured memory vault</span>
+            <span class="chip">Local-only memory vault</span>
             <span class="chip">Retrieval-grounded chat + weekly recap</span>
           </div>
           <div class="hero-panels">
@@ -551,48 +903,32 @@
               <p>Start/stop recording, auto-upload to the backend, and keep the log visible so you always know what happened.</p>
             </div>
             <div class="hero-card">
-              <h4>Timeline filters</h4>
-              <p>Browse entries by last 7 days, 30 days, or all time with sentiment, topics, and expandable detail.</p>
-            </div>
-            <div class="hero-card">
               <h4>Insights & chat</h4>
               <p>View basic stats, see recency trends, and chat with an assistant that cites the entries it used.</p>
             </div>
           </div>
         </div>
         <div>
-          <div class="eyebrow">Account</div>
-          <div class="auth-card">
-            <input id="authEmail" class="user-input" type="email" placeholder="email@domain.com" />
-            <input id="authPassword" class="user-input" type="password" placeholder="password (min 8 chars)" />
-            <div class="controls" style="margin-top: 8px;">
-              <button id="signupBtn" class="primary">Sign up</button>
-              <button id="loginBtn">Log in</button>
-              <button id="logoutBtn">Log out</button>
-            </div>
-            <div id="authStatus" class="muted small" style="margin-top: 6px;">Create an account or log in to sync your memories.</div>
-          </div>
-          <div class="divider"></div>
+          <div class="eyebrow">Local mode</div>
           <div class="hero-card">
+            <h4>No login required</h4>
+            <p>Entries save to your local database (<code>ltm.db</code>) so you can reset or reseed any time.</p>
+          </div>
+          <div class="hero-card" style="margin-top: 10px;">
             <h4>Privacy-first by default</h4>
-            <p>Your entries are scoped to your account. We only answer using the memories you’ve stored.</p>
+            <p>Your entries stay on this device, and answers are grounded only in what you store.</p>
           </div>
           <div class="hero-card" style="margin-top: 10px;">
             <h4>Quick start checklist</h4>
-            <p>1. Sign up • 2. Record a memory • 3. Ask the chat a question • 4. Review your weekly recap</p>
+            <p>1. Record a memory • 2. Ask the chat a question • 3. Review your weekly recap</p>
           </div>
         </div>
       </div>
     </section>
 
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="capture">Capture</button>
-      <button class="tab-btn" data-tab="timeline">Timeline</button>
-      <button class="tab-btn" data-tab="insights">Insights &amp; Chat</button>
-    </div>
-
     <!-- Capture Tab -->
     <section id="capture" class="tab-content active">
+      <div class="section-divider">Capture</div>
       <div class="section-grid capture-grid">
         <div class="card">
           <div class="card-header">
@@ -602,7 +938,7 @@
               <h2>Record or upload an entry</h2>
               <p>Click start, tell your story, then save. Audio is transcribed, summarized, and stored with sentiment and topics.</p>
               </div>
-              <div class="section-note">Securely saved to your account</div>
+              <div class="section-note">Saved locally to your vault</div>
             </div>
             <div class="status-pill">Live capture</div>
           </div>
@@ -651,6 +987,7 @@
 
     <!-- Timeline Tab -->
     <section id="timeline" class="tab-content">
+      <div class="section-divider">Timeline</div>
       <div class="card">
         <div class="card-header">
           <div class="section-title">
@@ -674,6 +1011,7 @@
 
     <!-- Insights & Chat Tab -->
     <section id="insights" class="tab-content">
+      <div class="section-divider">Insights &amp; Chat</div>
       <div class="section-grid insights-grid">
         <div class="card">
           <div class="card-header">
@@ -693,28 +1031,92 @@
           </div>
           <div id="entriesChart" class="chart"></div>
           <div class="recap-card">
-            <div class="card-header" style="margin-bottom:4px;">
+            <div class="recap-toolbar">
               <div>
                 <div class="eyebrow">Weekly pulse</div>
                 <h3 style="margin:0;">Generate recap</h3>
+                <p class="small muted" style="margin-top:4px;">A quick summary and highlights from the last 7 days.</p>
               </div>
-              <button id="weeklyQuickBtn" class="primary">Generate</button>
+              <div class="recap-actions">
+                <button id="weeklyQuickBtn" class="primary">Generate</button>
+              </div>
             </div>
             <div id="weeklyQuickStatus" class="muted small"></div>
-            <div id="weeklyQuickResult" class="recap-card hidden" style="margin:0;"></div>
+            <div id="weeklyQuickResult" class="recap-output hidden"></div>
           </div>
           <div class="video-card">
-            <div class="card-header" style="margin-bottom:4px;">
+            <div class="recap-toolbar">
               <div>
                 <div class="eyebrow">Weekly video</div>
-                <h3 style="margin:0;">30s recap</h3>
-                <p class="small muted">AI-generated flat pastel cartoon scenes with a neutral voice. Generated on demand.</p>
+                <h3 style="margin:0;">Create Sora prompt</h3>
+                <p class="small muted">Pick memories, generate a Sora-ready prompt, and create the video in ChatGPT.</p>
               </div>
-              <button id="weeklyVideoBtn" class="primary">Generate video</button>
+              <div class="recap-actions">
+                <button id="soraBuildBtn" class="primary" disabled>Build Sora prompt</button>
+              </div>
             </div>
-            <div id="weeklyVideoStatus" class="muted small"></div>
-            <video id="weeklyVideoPlayer" class="video-player hidden" controls playsinline></video>
-            <a id="weeklyVideoDownload" class="download-link hidden">Download MP4</a>
+            <div id="soraCandidateStatus" class="muted small">Loading memory candidates...</div>
+            <div class="prompt-candidate-grid">
+              <div class="candidate-group">
+                <h4>Most significant</h4>
+                <div id="soraSignificantList" class="candidate-list"></div>
+              </div>
+              <div class="candidate-group">
+                <h4>Most cinematic</h4>
+                <div id="soraCinematicList" class="candidate-list"></div>
+              </div>
+            </div>
+            <div class="prompt-options">
+              <div class="select-wrap">
+                <label for="soraDuration" class="small muted">Duration</label>
+                <select id="soraDuration" class="select-field">
+                  <option value="10">10 sec</option>
+                  <option value="15" selected>15 sec</option>
+                </select>
+              </div>
+              <div class="select-wrap">
+                <label for="soraOrientation" class="small muted">Orientation</label>
+                <select id="soraOrientation" class="select-field">
+                  <option value="landscape" selected>Landscape (1280x720)</option>
+                  <option value="portrait">Portrait (720x1280)</option>
+                </select>
+              </div>
+              <div class="select-wrap">
+                <label for="soraStyle" class="small muted">Style</label>
+                <select id="soraStyle" class="select-field">
+                  <option value="cinematic_realistic" selected>Cinematic realistic</option>
+                  <option value="dreamy_soft_film">Dreamy soft film</option>
+                  <option value="documentary_handheld">Documentary handheld</option>
+                </select>
+              </div>
+              <div class="select-wrap">
+                <label for="soraPreset" class="small muted">Prompt presets</label>
+                <select id="soraPreset" class="select-field">
+                  <option value="none" selected>Balanced default</option>
+                  <option value="family_highlight_reel">Family highlight reel</option>
+                  <option value="adventure_montage">Adventure montage</option>
+                  <option value="calm_reflective">Calm reflective</option>
+                  <option value="celebration_moments">Celebration moments</option>
+                </select>
+              </div>
+            </div>
+            <div id="soraPromptLoading" class="loading-row hidden">
+              <div class="spinner"></div>
+              <div>Building prompt...</div>
+            </div>
+            <div id="soraPromptError" class="error-banner hidden"></div>
+            <div id="soraPromptOutput" class="prompt-output hidden">
+              <textarea id="soraPromptText" class="prompt-textarea" readonly></textarea>
+              <div class="prompt-actions">
+                <button id="soraCopyBtn">Copy prompt</button>
+                <button id="soraOpenBtn">Open Sora</button>
+              </div>
+              <div class="muted small">Paste the prompt in Sora or ChatGPT to generate your video.</div>
+              <details id="soraDebug" class="debug-panel">
+                <summary>Why these memories?</summary>
+                <div id="soraDebugContent" class="debug-list"></div>
+              </details>
+            </div>
           </div>
         </div>
         <div class="card">
@@ -737,6 +1139,127 @@
         </div>
       </div>
     </section>
+
+    <!-- Engine Tab -->
+    <section id="engine" class="tab-content">
+      <div class="section-divider">Engine</div>
+      <div class="section-grid engine-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="section-title">
+              <div>
+                <div class="eyebrow">System map</div>
+                <h2>How the assistant thinks</h2>
+                <p class="small muted">From capture to retrieval, these are the steps that shape the output.</p>
+              </div>
+              <div class="section-note">Live pipeline overview</div>
+            </div>
+          </div>
+          <ol class="pipeline-list">
+            <li><div><strong>Capture</strong> Voice or text is stored as a raw entry with source + confidence defaults.</div></li>
+            <li><div><strong>Analyze</strong> Summaries, topics, people/places, emotions, and sentiment are extracted.</div></li>
+            <li><div><strong>Embed</strong> A vector embedding is generated for retrieval and similarity search.</div></li>
+            <li><div><strong>Classify</strong> Entries are tagged into memory types (event, reflection, preference, identity, project).</div></li>
+            <li><div><strong>Retrieve</strong> Queries blend similarity, recency, confidence, and domain boosts.</div></li>
+            <li><div><strong>Synthesize</strong> Recaps, chat, and videos are generated from the selected entries.</div></li>
+          </ol>
+          <div style="margin-top: 12px;">
+            <div class="eyebrow">Memory types</div>
+            <div class="pill-row">
+              <span class="pill">event</span>
+              <span class="pill">reflection</span>
+              <span class="pill">preference</span>
+              <span class="pill">identity</span>
+              <span class="pill">project</span>
+            </div>
+          </div>
+          <div class="callouts" style="margin-top: 12px;">
+            <div class="callout">Retrieval scores blend similarity (0.60), recency (0.15), importance (0.10), confidence (0.10), and project relevance (0.05) plus domain boosts.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="section-title">
+              <div>
+                <div class="eyebrow">Live diagnostics</div>
+                <h2>Signals &amp; categorization</h2>
+                <p class="small muted">Aggregated from your stored entries.</p>
+              </div>
+              <div class="section-note">Auto-updates from data</div>
+            </div>
+          </div>
+          <div id="engineStatus" class="muted small">Loading…</div>
+          <div id="engineMetrics" class="stat-grid"></div>
+          <div class="mini-divider"></div>
+          <div class="eyebrow">Memory types</div>
+          <div id="engineMemoryTypes" class="bar-list"></div>
+          <div class="eyebrow" style="margin-top: 10px;">Sentiment labels</div>
+          <div id="engineSentiments" class="bar-list"></div>
+          <div class="eyebrow" style="margin-top: 10px;">Processing status</div>
+          <div id="engineProcessing" class="bar-list"></div>
+          <div class="mini-divider"></div>
+          <div class="engine-lists">
+            <div>
+              <div class="eyebrow">Top topics</div>
+              <div id="engineTopTopics" class="pill-row"></div>
+            </div>
+            <div>
+              <div class="eyebrow">Top emotions</div>
+              <div id="engineTopEmotions" class="pill-row"></div>
+            </div>
+            <div>
+              <div class="eyebrow">Top people</div>
+              <div id="engineTopPeople" class="pill-row"></div>
+            </div>
+            <div>
+              <div class="eyebrow">Top places</div>
+              <div id="engineTopPlaces" class="pill-row"></div>
+            </div>
+          </div>
+          <div class="mini-divider"></div>
+          <div>
+            <div class="eyebrow">Processing errors</div>
+            <div id="engineFailures" class="muted small">No failures detected.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="section-title">
+              <div>
+                <div class="eyebrow">Retrieval debug</div>
+                <h2>Why did it answer that?</h2>
+                <p class="small muted">Run a test question to see the entries and scoring factors used.</p>
+              </div>
+              <div class="section-note">Debug mode</div>
+            </div>
+          </div>
+          <div class="engine-query">
+            <input id="engineQueryInput" class="text-input" type="text" placeholder="Ask about goals, people, travel..." />
+            <button id="engineQueryBtn" class="primary">Run</button>
+          </div>
+          <div id="engineQueryStatus" class="muted small" style="margin-top: 6px;"></div>
+          <div id="engineQueryAnswer" class="callout hidden" style="margin-top: 10px;"></div>
+          <div id="engineQueryUsed" class="engine-sample"></div>
+          <pre id="engineQueryDebug" class="mono hidden" style="margin-top: 10px;"></pre>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="section-title">
+              <div>
+                <div class="eyebrow">Live samples</div>
+                <h2>Recent classifications</h2>
+                <p class="small muted">A quick view of how entries are labeled.</p>
+              </div>
+              <div class="section-note">Most recent first</div>
+            </div>
+          </div>
+          <div id="engineSample" class="engine-sample"></div>
+        </div>
+      </div>
+    </section>
   </main>
   <footer id="privacy">
     <div>Private by design • Account-scoped memories • You control what you save</div>
@@ -748,8 +1271,6 @@
     const stopBtn = document.getElementById("stopBtn");
     const statusEl = document.getElementById("status");
     const logEl = document.getElementById("log");
-    const userIdInput = document.getElementById("userIdInput");
-    const apiKeyInput = document.getElementById("apiKeyInput");
     const tabButtons = document.querySelectorAll(".tab-btn");
     const tabContents = document.querySelectorAll(".tab-content");
     const recentEntriesEl = document.getElementById("recentEntries");
@@ -763,10 +1284,21 @@
     const weeklyQuickBtn = document.getElementById("weeklyQuickBtn");
     const weeklyQuickStatus = document.getElementById("weeklyQuickStatus");
     const weeklyQuickResult = document.getElementById("weeklyQuickResult");
-    const weeklyVideoBtn = document.getElementById("weeklyVideoBtn");
-    const weeklyVideoStatus = document.getElementById("weeklyVideoStatus");
-    const weeklyVideoPlayer = document.getElementById("weeklyVideoPlayer");
-    const weeklyVideoDownload = document.getElementById("weeklyVideoDownload");
+    const soraBuildBtn = document.getElementById("soraBuildBtn");
+    const soraCandidateStatus = document.getElementById("soraCandidateStatus");
+    const soraSignificantList = document.getElementById("soraSignificantList");
+    const soraCinematicList = document.getElementById("soraCinematicList");
+    const soraDuration = document.getElementById("soraDuration");
+    const soraOrientation = document.getElementById("soraOrientation");
+    const soraStyle = document.getElementById("soraStyle");
+    const soraPreset = document.getElementById("soraPreset");
+    const soraPromptLoading = document.getElementById("soraPromptLoading");
+    const soraPromptError = document.getElementById("soraPromptError");
+    const soraPromptOutput = document.getElementById("soraPromptOutput");
+    const soraPromptText = document.getElementById("soraPromptText");
+    const soraCopyBtn = document.getElementById("soraCopyBtn");
+    const soraOpenBtn = document.getElementById("soraOpenBtn");
+    const soraDebugContent = document.getElementById("soraDebugContent");
     const chatPane = document.getElementById("chatPane");
     const chatInput = document.getElementById("chatInput");
     const chatSendBtn = document.getElementById("chatSendBtn");
@@ -774,6 +1306,23 @@
     const promptBtn = document.getElementById("promptBtn");
     const promptUseBtn = document.getElementById("promptUseBtn");
     const promptText = document.getElementById("promptText");
+    const engineStatus = document.getElementById("engineStatus");
+    const engineMetrics = document.getElementById("engineMetrics");
+    const engineMemoryTypes = document.getElementById("engineMemoryTypes");
+    const engineSentiments = document.getElementById("engineSentiments");
+    const engineProcessing = document.getElementById("engineProcessing");
+    const engineTopTopics = document.getElementById("engineTopTopics");
+    const engineTopEmotions = document.getElementById("engineTopEmotions");
+    const engineTopPeople = document.getElementById("engineTopPeople");
+    const engineTopPlaces = document.getElementById("engineTopPlaces");
+    const engineFailures = document.getElementById("engineFailures");
+    const engineSample = document.getElementById("engineSample");
+    const engineQueryInput = document.getElementById("engineQueryInput");
+    const engineQueryBtn = document.getElementById("engineQueryBtn");
+    const engineQueryStatus = document.getElementById("engineQueryStatus");
+    const engineQueryAnswer = document.getElementById("engineQueryAnswer");
+    const engineQueryUsed = document.getElementById("engineQueryUsed");
+    const engineQueryDebug = document.getElementById("engineQueryDebug");
 
     const filter7 = document.getElementById("filter7");
     const filter30 = document.getElementById("filter30");
@@ -784,144 +1333,14 @@
     let conversationHistory = [];
     let entriesCache = [];
     let summaryCache = null;
-    let weeklyVideoBlobUrl = null;
-    const authEmail = document.getElementById("authEmail");
-    const authPassword = document.getElementById("authPassword");
-    const signupBtn = document.getElementById("signupBtn");
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const authStatus = document.getElementById("authStatus");
-
-    const AUTH_TOKEN_KEY = "ltm-auth-token";
-    const AUTH_EMAIL_KEY = "ltm-auth-email";
+    let soraCandidatesLoaded = false;
+    let soraCandidateMap = new Map();
+    let soraScoreMap = new Map();
     const API_BASE = window.LTM_API_BASE || "";
+    const SORA_URL = window.LTM_SORA_URL || "https://chatgpt.com/";
 
-    const savedEmail = localStorage.getItem(AUTH_EMAIL_KEY);
-    if (savedEmail) {
-      authEmail.value = savedEmail;
-    }
-
-    function getAuthToken() {
-      return localStorage.getItem(AUTH_TOKEN_KEY);
-    }
-
-    function setAuthToken(token, email) {
-      if (token) {
-        localStorage.setItem(AUTH_TOKEN_KEY, token);
-      } else {
-        localStorage.removeItem(AUTH_TOKEN_KEY);
-      }
-      if (email) {
-        localStorage.setItem(AUTH_EMAIL_KEY, email);
-      }
-    }
-
-    function fetchWithAuth(url, options = {}) {
-      const headers = new Headers(options.headers || {});
-      const token = getAuthToken();
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      return fetch(url, { ...options, headers });
-    }
-
-    function resetUserScopedState() {
-      entriesCache = [];
-      summaryCache = null;
-      conversationHistory = [];
-      renderConversation();
-      chatStatus.textContent = "";
-      if (weeklyVideoBlobUrl) {
-        URL.revokeObjectURL(weeklyVideoBlobUrl);
-        weeklyVideoBlobUrl = null;
-      }
-      weeklyVideoPlayer.classList.add("hidden");
-      weeklyVideoPlayer.removeAttribute("src");
-      weeklyVideoDownload.classList.add("hidden");
-      weeklyVideoStatus.textContent = "";
-      loadEntries();
-      loadSummary();
-    }
-
-    function setAuthStatus(message, isError = false) {
-      authStatus.textContent = message;
-      authStatus.style.color = isError ? "#ff9b9b" : "";
-    }
-
-    async function signup() {
-      const email = (authEmail.value || "").trim();
-      const password = (authPassword.value || "").trim();
-      if (!email || !password) {
-        setAuthStatus("Enter email and password to sign up.", true);
-        return;
-      }
-      try {
-        const resp = await fetch(`${API_BASE}/auth/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
-        if (!resp.ok) {
-          const text = await resp.text();
-          setAuthStatus(`Signup failed: ${text}`, true);
-          return;
-        }
-        const data = await resp.json();
-        setAuthToken(data.access_token, email);
-        setAuthStatus(`Signed in as ${email}.`);
-        resetUserScopedState();
-      } catch (err) {
-        setAuthStatus(`Signup error: ${err}`, true);
-      }
-    }
-
-    async function login() {
-      const email = (authEmail.value || "").trim();
-      const password = (authPassword.value || "").trim();
-      if (!email || !password) {
-        setAuthStatus("Enter email and password to log in.", true);
-        return;
-      }
-      try {
-        const resp = await fetch(`${API_BASE}/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
-        if (!resp.ok) {
-          const text = await resp.text();
-          setAuthStatus(`Login failed: ${text}`, true);
-          return;
-        }
-        const data = await resp.json();
-        setAuthToken(data.access_token, email);
-        setAuthStatus(`Signed in as ${email}.`);
-        resetUserScopedState();
-      } catch (err) {
-        setAuthStatus(`Login error: ${err}`, true);
-      }
-    }
-
-    function logout() {
-      setAuthToken(null, null);
-      setAuthStatus("Logged out.");
-      resetUserScopedState();
-    }
-
-    signupBtn.addEventListener("click", signup);
-    loginBtn.addEventListener("click", login);
-    logoutBtn.addEventListener("click", logout);
-
-    if (getAuthToken() && savedEmail) {
-      setAuthStatus(`Signed in as ${savedEmail}.`);
-    }
-
-    function ensureAuthenticated(message) {
-      if (getAuthToken()) {
-        return true;
-      }
-      setAuthStatus(message || "Please sign up or log in to continue.", true);
-      return false;
+    function fetchApi(url, options = {}) {
+      return fetch(url, options);
     }
 
     function getActiveRange() {
@@ -950,16 +1369,26 @@
       return value.split(",").map((item) => item.trim()).filter(Boolean);
     }
 
+    function isEngineActive() {
+      const engineTab = document.getElementById("engine");
+      return engineTab ? engineTab.classList.contains("active") : false;
+    }
+
     // --- Tab logic ---
     function setActiveTab(tabName) {
       tabButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tabName));
       tabContents.forEach((section) => section.classList.toggle("active", section.id === tabName));
 
+      if (tabName === "engine") {
+        refreshEngine();
+        return;
+      }
       if (tabName === "timeline" || tabName === "capture" || tabName === "insights") {
         loadEntries(); // shared cache
       }
       if (tabName === "insights") {
         loadSummary();
+        loadVideoCandidates();
       }
     }
     tabButtons.forEach((btn) => btn.addEventListener("click", () => setActiveTab(btn.dataset.tab)));
@@ -972,9 +1401,6 @@
     }
 
     async function startRecording() {
-      if (!ensureAuthenticated("Log in to record and save entries.")) {
-        return;
-      }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
@@ -990,7 +1416,7 @@
           formData.append("file", blob, "entry.webm");
 
           try {
-            const resp = await fetchWithAuth(`${API_BASE}/entries`, { method: "POST", body: formData });
+            const resp = await fetchApi(`${API_BASE}/entries`, { method: "POST", body: formData });
             if (!resp.ok) {
               const text = await resp.text();
               log(`❌ Server error: ${resp.status} – ${text}`);
@@ -1034,55 +1460,61 @@
 
     // --- Data fetching ---
     async function loadEntries() {
-      if (!ensureAuthenticated("Log in to view entries.")) {
-        recentEntriesEl.textContent = "Log in to load your entries.";
-        timelineStatus.textContent = "Log in to load your entries.";
-        return;
-      }
       if (entriesCache.length) {
         renderRecent(entriesCache);
         renderTimeline(entriesCache, getActiveRange());
-        return;
+        if (isEngineActive()) {
+          renderEngine(entriesCache, summaryCache);
+        }
+        return entriesCache;
       }
       timelineStatus.textContent = "Loading…";
       try {
-        const resp = await fetchWithAuth(`${API_BASE}/insights/entries`);
+        const resp = await fetchApi(`${API_BASE}/insights/entries`);
         if (!resp.ok) throw new Error(`Server responded with ${resp.status}`);
         entriesCache = await resp.json();
         renderRecent(entriesCache);
         renderTimeline(entriesCache, getActiveRange());
+        if (isEngineActive()) {
+          renderEngine(entriesCache, summaryCache);
+        }
+        return entriesCache;
       } catch (err) {
         recentEntriesEl.textContent = `Failed to load entries: ${err.message}`;
         timelineStatus.textContent = `Failed to load entries: ${err.message}`;
+        return [];
       }
     }
 
     async function loadSummary() {
-      if (!ensureAuthenticated("Log in to view insights.")) {
-        summaryText.textContent = "Log in to view your insights.";
-        entriesChart.innerHTML = "";
-        return;
-      }
       if (summaryCache) {
         renderSummary(summaryCache);
-        return;
+        if (isEngineActive()) {
+          renderEngine(entriesCache, summaryCache);
+        }
+        return summaryCache;
       }
       summaryText.textContent = "Loading stats…";
       entriesChart.innerHTML = "";
       try {
-        const resp = await fetchWithAuth(`${API_BASE}/insights/summary`);
+        const resp = await fetchApi(`${API_BASE}/insights/summary`);
         if (!resp.ok) throw new Error(`Server responded with ${resp.status}`);
         summaryCache = await resp.json();
         renderSummary(summaryCache);
+        if (isEngineActive()) {
+          renderEngine(entriesCache, summaryCache);
+        }
+        return summaryCache;
       } catch (err) {
         summaryText.textContent = `Failed to load stats: ${err.message}`;
+        return null;
       }
     }
 
     async function updateEntry(entryId, payload, statusEl) {
       statusEl.textContent = "Saving changes…";
       try {
-        const resp = await fetchWithAuth(`${API_BASE}/entries/${entryId}`, {
+        const resp = await fetchApi(`${API_BASE}/entries/${entryId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -1102,7 +1534,7 @@
     async function confirmEntry(entryId, statusEl) {
       statusEl.textContent = "Confirming…";
       try {
-        const resp = await fetchWithAuth(`${API_BASE}/entries/${entryId}/confirm`, {
+        const resp = await fetchApi(`${API_BASE}/entries/${entryId}/confirm`, {
           method: "POST",
         });
         if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
@@ -1117,7 +1549,7 @@
     async function flagEntry(entryId, reason, statusEl, flagged = true) {
       statusEl.textContent = flagged ? "Flagging…" : "Removing flag…";
       try {
-        const resp = await fetchWithAuth(`${API_BASE}/entries/${entryId}/flag`, {
+        const resp = await fetchApi(`${API_BASE}/entries/${entryId}/flag`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ flagged, reason }),
@@ -1383,15 +1815,15 @@
 
       const pathD = svgParts.map((pt, i) => `${i === 0 ? "M" : "L"}${pt.x},${pt.y}`).join(" ");
       const circles = svgParts
-        .map((pt) => `<circle cx="${pt.x}" cy="${pt.y}" r="3" fill="${pt.count === maxCount ? "#6cf0c2" : "#7aa8ff"}"><title>${pt.date}: ${pt.count}</title></circle>`)
+        .map((pt) => `<circle cx="${pt.x}" cy="${pt.y}" r="3" fill="${pt.count === maxCount ? "#7fb8a6" : "#f0c58a"}"><title>${pt.date}: ${pt.count}</title></circle>`)
         .join("");
 
       wrap.innerHTML = `
         <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="width:100%;height:60px;">
           <defs>
             <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#7aa8ff" />
-              <stop offset="100%" stop-color="#6cf0c2" />
+              <stop offset="0%" stop-color="#f0c58a" />
+              <stop offset="100%" stop-color="#7fb8a6" />
             </linearGradient>
           </defs>
           <path d="${pathD}" fill="none" stroke="url(#grad)" stroke-width="2" />
@@ -1402,32 +1834,276 @@
       return wrap;
     }
 
-    // --- Weekly recap (simple card) ---
-    async function generateWeeklyQuick() {
-      if (!ensureAuthenticated("Log in to generate a recap.")) {
+    function cleanRecapText(text) {
+      if (!text || typeof text !== "string") return "";
+      let cleaned = text.trim();
+      cleaned = cleaned.replace(/```(?:json)?/gi, "");
+      cleaned = cleaned.replace(/```/g, "");
+      cleaned = cleaned.replace(/^\s*json\s*/i, "");
+      cleaned = cleaned.replace(/^\s*(summary|highlights|themes)\s*:\s*/i, "");
+      cleaned = cleaned.replace(/^[-•]+\s*/, "");
+      cleaned = cleaned.replace(/^"+|"+$/g, "");
+      cleaned = cleaned.replace(/^\[|\]$/g, "");
+      return cleaned.trim();
+    }
+
+    function extractJsonPayload(raw) {
+      if (!raw || typeof raw !== "string") return null;
+      let cleaned = raw.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
+      cleaned = cleaned.replace(/^\s*json\s*/i, "");
+      const start = cleaned.indexOf("{");
+      const end = cleaned.lastIndexOf("}");
+      if (start === -1 || end === -1 || end <= start) return null;
+      const slice = cleaned.slice(start, end + 1);
+      try {
+        return JSON.parse(slice);
+      } catch (err) {
+        return null;
+      }
+    }
+
+    function extractJsonField(raw, key) {
+      if (!raw || typeof raw !== "string") return "";
+      const match = raw.match(new RegExp(`"${key}"\\s*:\\s*"([^"]+)"`, "s"));
+      return match ? match[1] : "";
+    }
+
+    function extractJsonArray(raw, key) {
+      if (!raw || typeof raw !== "string") return [];
+      const match = raw.match(new RegExp(`"${key}"\\s*:\\s*\\[(.*?)\\]`, "s"));
+      if (!match) return [];
+      const items = Array.from(match[1].matchAll(/"([^"]+)"/g)).map((m) => m[1]);
+      return items.filter(Boolean);
+    }
+
+    function formatRecapMetric(value, digits = 2) {
+      if (value === null || value === undefined || value === "") return "-";
+      const num = Number(value);
+      return Number.isFinite(num) ? num.toFixed(digits) : value;
+    }
+
+    function normalizeRecapData(data) {
+      if (!data || typeof data !== "object") return data;
+      const normalized = { ...data };
+      if (typeof normalized.summary === "string") {
+        const summaryText = normalized.summary.trim();
+        if (summaryText.includes("{") && summaryText.includes("\"summary\"")) {
+          const parsed = extractJsonPayload(summaryText);
+          if (parsed) {
+            normalized.summary = parsed.summary || normalized.summary;
+            if (Array.isArray(parsed.themes)) {
+              normalized.themes = parsed.themes;
+            }
+            if (Array.isArray(parsed.highlights)) {
+              normalized.highlights = parsed.highlights;
+            }
+          } else {
+            const extractedSummary = extractJsonField(summaryText, "summary");
+            if (extractedSummary) {
+              normalized.summary = extractedSummary;
+            }
+            const extractedThemes = extractJsonArray(summaryText, "themes");
+            if (extractedThemes.length) {
+              normalized.themes = extractedThemes;
+            }
+            const extractedHighlights = extractJsonArray(summaryText, "highlights");
+            if (extractedHighlights.length) {
+              normalized.highlights = extractedHighlights;
+            }
+          }
+        }
+        normalized.summary = cleanRecapText(normalized.summary);
+      }
+      if (Array.isArray(normalized.highlights)) {
+        normalized.highlights = normalized.highlights
+          .map((item) => cleanRecapText(item))
+          .filter(Boolean);
+      }
+      if (Array.isArray(normalized.themes)) {
+        normalized.themes = normalized.themes
+          .map((item) => cleanRecapText(item))
+          .filter(Boolean);
+      }
+      if (Array.isArray(normalized.top_topics)) {
+        normalized.top_topics = normalized.top_topics
+          .map((item) => cleanRecapText(item))
+          .filter(Boolean);
+      }
+      return normalized;
+    }
+
+    function countBy(list, getKey) {
+      const counts = {};
+      list.forEach((item) => {
+        const key = getKey(item) || "unknown";
+        counts[key] = (counts[key] || 0) + 1;
+      });
+      return counts;
+    }
+
+    function renderPills(container, items, emptyLabel = "—") {
+      if (!container) return;
+      if (!items || !items.length) {
+        container.innerHTML = `<span class="muted small">${emptyLabel}</span>`;
         return;
       }
+      container.innerHTML = items.map((item) => `<span class="pill">${item}</span>`).join("");
+    }
+
+    function renderBarList(container, counts, emptyLabel = "No data yet.") {
+      if (!container) return;
+      const rows = Object.entries(counts);
+      if (!rows.length) {
+        container.innerHTML = `<div class="muted small">${emptyLabel}</div>`;
+        return;
+      }
+      rows.sort((a, b) => b[1] - a[1]);
+      const max = Math.max(...rows.map((row) => row[1]), 1);
+      container.innerHTML = rows.map(([label, value]) => {
+        const pct = Math.round((value / max) * 100);
+        return `
+          <div class="bar-row">
+            <div>${label}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+            <div>${value}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderEngine(entries, summary) {
+      if (!engineStatus) return;
+      if (!entries || !entries.length) {
+        engineStatus.textContent = "No entries yet.";
+        engineMetrics.innerHTML = "";
+        renderBarList(engineMemoryTypes, {});
+        renderBarList(engineSentiments, {});
+        renderBarList(engineProcessing, {});
+        renderPills(engineTopTopics, []);
+        renderPills(engineTopEmotions, []);
+        renderPills(engineTopPeople, []);
+        renderPills(engineTopPlaces, []);
+        engineFailures.textContent = "No failures detected.";
+        engineSample.innerHTML = "";
+        return;
+      }
+
+      engineStatus.textContent = `Analyzing ${entries.length} entries.`;
+
+      const memoryCounts = countBy(entries, (entry) => entry.memory_type || "event");
+      const sentimentCounts = countBy(entries, (entry) => entry.sentiment_label || "unlabeled");
+      const processingCounts = countBy(entries, (entry) => entry.processing_status || "complete");
+      const sources = countBy(entries, (entry) => entry.source || "unknown");
+
+      const topicsCount = entries.filter((e) => (e.topics || []).length).length;
+      const peopleCount = entries.filter((e) => (e.people || []).length).length;
+      const placesCount = entries.filter((e) => (e.places || []).length).length;
+      const emotionsCount = entries.filter((e) => (e.emotions || []).length).length;
+
+      const uniqueTopics = new Set();
+      entries.forEach((entry) => (entry.topics || []).forEach((topic) => uniqueTopics.add(topic)));
+
+      engineMetrics.innerHTML = `
+        <div class="stat"><strong>Total entries</strong>${entries.length}</div>
+        <div class="stat"><strong>Avg words</strong>${summary ? summary.average_word_count.toFixed(1) : "—"}</div>
+        <div class="stat"><strong>Avg sentiment</strong>${summary && summary.average_sentiment_score !== null ? formatPercent(summary.average_sentiment_score) : "—"}</div>
+        <div class="stat"><strong>Sources</strong>${Object.keys(sources).length}</div>
+        <div class="stat"><strong>Topics tagged</strong>${formatPercent(topicsCount / entries.length)}</div>
+        <div class="stat"><strong>People tagged</strong>${formatPercent(peopleCount / entries.length)}</div>
+        <div class="stat"><strong>Places tagged</strong>${formatPercent(placesCount / entries.length)}</div>
+        <div class="stat"><strong>Emotions tagged</strong>${formatPercent(emotionsCount / entries.length)}</div>
+        <div class="stat"><strong>Unique topics</strong>${uniqueTopics.size}</div>
+      `;
+
+      renderBarList(engineMemoryTypes, memoryCounts, "No memory types yet.");
+      renderBarList(engineSentiments, sentimentCounts, "No sentiment labels yet.");
+      renderBarList(engineProcessing, processingCounts, "No processing data yet.");
+
+      renderPills(engineTopTopics, summary?.top_topics || []);
+      renderPills(engineTopEmotions, summary?.top_emotions || []);
+      renderPills(engineTopPeople, summary?.top_people || []);
+      renderPills(engineTopPlaces, summary?.top_places || []);
+
+      const failures = entries.filter((entry) => entry.processing_status === "failed");
+      if (!failures.length) {
+        engineFailures.textContent = "No failures detected.";
+      } else {
+        engineFailures.innerHTML = `<div class="callouts">${failures.slice(0, 3).map((entry) => (
+          `<div class="callout">${entry.preview || entry.summary || "Entry"} - ${entry.processing_error || "Unknown error"}</div>`
+        )).join("")}</div>`;
+      }
+
+      const sample = entries.slice(0, 6);
+      engineSample.innerHTML = sample.map((entry) => {
+        const date = formatDate(entry.created_at);
+        const sentiment = entry.sentiment_label || "neutral";
+        const topics = (entry.topics || []).slice(0, 4);
+        const people = (entry.people || []).slice(0, 2).join(", ");
+        const places = (entry.places || []).slice(0, 2).join(", ");
+        const meta = [people, places].filter(Boolean).join(" • ");
+        const topicsHtml = topics.length ? topics.map((topic) => `<span class="pill">${topic}</span>`).join("") : '<span class="muted small">No topics</span>';
+        return `
+          <div class="sample-item">
+            <div class="sample-head">
+              <div>${date}</div>
+              <div>${entry.memory_type || "event"} • ${sentiment}</div>
+            </div>
+            <div style="margin-top:6px;">${entry.preview || entry.summary || "—"}</div>
+            <div class="sample-tags">${topicsHtml}</div>
+            ${meta ? `<div class="muted small" style="margin-top:6px;">${meta}</div>` : ""}
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function refreshEngine() {
+      if (!engineStatus) return;
+      engineStatus.textContent = "Loading diagnostics...";
+      await Promise.all([loadEntries(), loadSummary()]);
+      renderEngine(entriesCache, summaryCache);
+    }
+
+    // --- Weekly recap (simple card) ---
+    async function generateWeeklyQuick() {
       weeklyQuickStatus.textContent = "Generating...";
       weeklyQuickResult.classList.add("hidden");
       weeklyQuickResult.innerHTML = "";
       weeklyQuickBtn.disabled = true;
       try {
-        const resp = await fetchWithAuth(`${API_BASE}/insights/weekly`);
+        const resp = await fetchApi(`${API_BASE}/insights/weekly`);
         if (resp.status === 404) {
           weeklyQuickStatus.textContent = "Add at least one entry in the last 7 days to get a recap.";
           return;
         }
         if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
-        const data = await resp.json();
-        const themes = (data.themes || []).map((t) => `<span class="pill">${t}</span>`).join("") || '<span class="muted small">—</span>';
-        const highlights = (data.highlights || []).map((h) => `<div>• ${h}</div>`).join("") || '<span class="muted small">—</span>';
+        const data = normalizeRecapData(await resp.json());
+        const themes = (data.themes || []).map((t) => `<span class="pill">${t}</span>`).join("") || '<span class="muted small">No themes yet.</span>';
+        const highlights = (data.highlights || []).map((h) => `<div>${h}</div>`).join("") || '<span class="muted small">No highlights yet.</span>';
+        const topics = (data.top_topics || []).map((topic) => `<span class="pill">${topic}</span>`).join("") || '<span class="muted small">No topics yet.</span>';
         weeklyQuickResult.classList.remove("hidden");
         weeklyQuickResult.innerHTML = `
-          <div class="muted small">Entries: ${data.total_entries ?? "—"} • Avg sentiment: ${data.average_sentiment ?? "—"}</div>
-          <div style="margin-top:6px;"><strong>Summary:</strong> ${data.summary || "—"}</div>
-          <div style="margin-top:6px;"><strong>Themes:</strong> ${themes}</div>
-          <div style="margin-top:6px;"><strong>Highlights:</strong> ${highlights}</div>
-          <div style="margin-top:6px;"><strong>Top topics:</strong> ${(data.top_topics || []).join(", ") || "—"}</div>
+          <div class="recap-metrics">
+            <span class="recap-pill">Entries: ${data.total_entries ?? "-"}</span>
+            <span class="recap-pill">Avg sentiment: ${formatRecapMetric(data.average_sentiment, 2)}</span>
+          </div>
+          <div class="recap-summary">
+            <div class="small muted">Summary</div>
+            <div>${data.summary || "-"}</div>
+          </div>
+          <div class="recap-grid">
+            <div>
+              <div class="small muted">Themes</div>
+              <div class="pill-row">${themes}</div>
+            </div>
+            <div>
+              <div class="small muted">Highlights</div>
+              <div class="recap-list">${highlights}</div>
+            </div>
+            <div>
+              <div class="small muted">Top topics</div>
+              <div class="pill-row">${topics}</div>
+            </div>
+          </div>
         `;
         weeklyQuickStatus.textContent = "";
       } catch (err) {
@@ -1439,83 +2115,271 @@
     }
     weeklyQuickBtn.addEventListener("click", generateWeeklyQuick);
 
-    // --- Weekly video ---
-    async function generateWeeklyVideo() {
-      weeklyVideoStatus.textContent = "Starting weekly video render...";
-      weeklyVideoBtn.disabled = true;
-      weeklyVideoPlayer.classList.add("hidden");
-      weeklyVideoDownload.classList.add("hidden");
-      if (weeklyVideoBlobUrl) {
-        URL.revokeObjectURL(weeklyVideoBlobUrl);
-        weeklyVideoBlobUrl = null;
+    // --- Sora prompt builder ---
+    function getSelectedSoraIds() {
+      const checked = document.querySelectorAll(".candidate-row input[type='checkbox']:checked");
+      return Array.from(checked).map((el) => el.dataset.entryId).filter(Boolean);
+    }
+
+    function getCandidateShortText(entry) {
+      const text = (entry.summary || entry.preview || "—").trim();
+      return text || "—";
+    }
+
+    function getCandidateFullText(entry) {
+      const text = (entry.content || entry.summary || entry.preview || "—").trim();
+      return text || "—";
+    }
+
+    function updateSoraSelectionState() {
+      if (!soraBuildBtn || !soraCandidateStatus) return;
+      const selected = getSelectedSoraIds();
+      soraBuildBtn.disabled = selected.length === 0;
+      document.querySelectorAll(".candidate-row").forEach((row) => {
+        const checkbox = row.querySelector("input[type='checkbox']");
+        row.classList.toggle("is-selected", Boolean(checkbox?.checked));
+      });
+      if (soraCandidatesLoaded) {
+        soraCandidateStatus.textContent = `Select 1-10 memories to build a prompt. ${selected.length} selected.`;
       }
+    }
+
+    function toggleCandidateExpand(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      const btn = event.currentTarget;
+      const row = btn.closest(".candidate-row");
+      if (!row) return;
+      const entryId = row.dataset.entryId;
+      const entry = soraCandidateMap.get(entryId);
+      if (!entry) return;
+      const summaryEl = row.querySelector(".candidate-summary");
+      if (!summaryEl) return;
+      const shortText = getCandidateShortText(entry);
+      const fullText = getCandidateFullText(entry);
+      const expanded = row.classList.toggle("expanded");
+      summaryEl.textContent = expanded ? fullText : shortText;
+      btn.textContent = expanded ? "Collapse" : "Expand";
+      btn.setAttribute("aria-expanded", expanded ? "true" : "false");
+    }
+
+    function renderCandidateList(targetEl, entries, tag) {
+      if (!targetEl) return;
+      if (!entries || !entries.length) {
+        targetEl.innerHTML = '<div class="muted small">No memories yet.</div>';
+        return;
+      }
+      const rows = entries.map((entry) => {
+        const preview = getCandidateShortText(entry);
+        const fullText = getCandidateFullText(entry);
+        const showExpand = fullText.length > preview.length + 24;
+        const dateLabel = formatDate(entry.created_at);
+        soraCandidateMap.set(entry.id, entry);
+        soraScoreMap.set(entry.id, { score: entry.score, tag });
+        return `
+          <label class="candidate-row" data-entry-id="${entry.id}">
+            <input type="checkbox" data-entry-id="${entry.id}">
+            <div class="candidate-content">
+              <div class="candidate-meta">
+                <div class="candidate-meta-left">
+                  <div class="candidate-date">${dateLabel}</div>
+                  <span class="badge ${tag}">${tag}</span>
+                </div>
+                ${showExpand ? '<button type="button" class="candidate-more" aria-expanded="false">Expand</button>' : ""}
+              </div>
+              <div class="candidate-summary">${preview}</div>
+            </div>
+          </label>
+        `;
+      }).join("");
+      targetEl.innerHTML = rows;
+      targetEl.querySelectorAll("input[type='checkbox']").forEach((checkbox) => {
+        checkbox.addEventListener("change", updateSoraSelectionState);
+      });
+      targetEl.querySelectorAll(".candidate-more").forEach((button) => {
+        button.addEventListener("click", toggleCandidateExpand);
+      });
+      updateSoraSelectionState();
+    }
+
+    async function loadVideoCandidates() {
+      if (!soraCandidateStatus || !soraSignificantList || !soraCinematicList) return;
+      if (soraCandidatesLoaded) return;
+      soraCandidateStatus.textContent = "Loading memory candidates...";
       try {
-        if (!ensureAuthenticated("Log in to generate a weekly video.")) {
-          return;
+        const resp = await fetchApi(`${API_BASE}/video/candidates`);
+        if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
+        const data = await resp.json();
+        soraCandidateMap = new Map();
+        soraScoreMap = new Map();
+        renderCandidateList(soraSignificantList, data.significant || [], "significant");
+        renderCandidateList(soraCinematicList, data.cinematic || [], "cinematic");
+        soraCandidatesLoaded = true;
+        updateSoraSelectionState();
+        if (!data.significant?.length && !data.cinematic?.length) {
+          soraCandidateStatus.textContent = "Add entries to see prompt candidates.";
         }
-        const resp = await fetchWithAuth(`${API_BASE}/products/weekly-video`, {
+      } catch (err) {
+        soraCandidateStatus.textContent = `Error: ${err.message || "Unable to load candidates"}`;
+      }
+    }
+
+    function renderSoraDebug(data) {
+      if (!soraDebugContent) return;
+      const scores = data?.debug?.entry_scores || [];
+      const scoreLines = scores.map((row) => {
+        const entry = soraCandidateMap.get(row.entry_id) || {};
+        const label = entry.preview || entry.summary || row.entry_id;
+        const sig = Number(row.significance_score || 0).toFixed(2);
+        const cin = Number(row.cinematic_score || 0).toFixed(2);
+        return `<div><strong>${label}</strong> • sig ${sig} • cin ${cin}</div>`;
+      }).join("");
+      const shotLines = (data?.shots || []).map((shot) => (
+        `<div><strong>Shot ${shot.shot}</strong> ${shot.description}</div>`
+      )).join("");
+      soraDebugContent.innerHTML = `
+        <div>
+          <div class="muted small">Selected entries</div>
+          ${scoreLines || '<div class="muted small">No scores available.</div>'}
+        </div>
+        <div style="margin-top:8px;">
+          <div class="muted small">Final shot list</div>
+          ${shotLines || '<div class="muted small">No shots returned.</div>'}
+        </div>
+      `;
+    }
+
+    async function buildSoraPrompt() {
+      if (!soraBuildBtn) return;
+      const entryIds = getSelectedSoraIds();
+      if (!entryIds.length) return;
+      soraBuildBtn.disabled = true;
+      soraPromptOutput?.classList.add("hidden");
+      soraPromptError?.classList.add("hidden");
+      soraPromptLoading?.classList.remove("hidden");
+      try {
+        const resp = await fetchApi(`${API_BASE}/video/build_prompt`, {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            entry_ids: entryIds,
+            duration_seconds: parseInt(soraDuration?.value || "15", 10),
+            orientation: soraOrientation?.value || "landscape",
+            style: soraStyle?.value || "cinematic_realistic",
+            preset: soraPreset?.value || "none",
+          }),
         });
         if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
         const data = await resp.json();
-        await pollWeeklyVideoStatus(data.job_id);
+        if (soraPromptText) soraPromptText.value = data.prompt || "";
+        soraPromptOutput?.classList.remove("hidden");
+        renderSoraDebug(data);
       } catch (err) {
-        weeklyVideoStatus.textContent = `Error: ${err.message || "Unable to start video"}`;
+        if (soraPromptError) {
+          soraPromptError.textContent = `Error: ${err.message || "Unable to build prompt"}`;
+          soraPromptError.classList.remove("hidden");
+        }
       } finally {
-        weeklyVideoBtn.disabled = false;
+        soraPromptLoading?.classList.add("hidden");
+        soraBuildBtn.disabled = entryIds.length === 0;
       }
     }
 
-    async function pollWeeklyVideoStatus(jobId) {
-      const maxAttempts = 60;
-      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-        weeklyVideoStatus.textContent = `Rendering video... (${attempt + 1}/${maxAttempts})`;
-        const resp = await fetchWithAuth(`${API_BASE}/products/${jobId}`);
+    async function copySoraPrompt() {
+      if (!soraPromptText || !soraPromptText.value) return;
+      try {
+        await navigator.clipboard.writeText(soraPromptText.value);
+        if (soraCandidateStatus) {
+          soraCandidateStatus.textContent = "Prompt copied to clipboard.";
+        }
+      } catch (err) {
+        soraPromptText.select();
+        document.execCommand("copy");
+      }
+    }
+
+    function openSora() {
+      window.open(SORA_URL, "_blank", "noopener");
+    }
+
+    soraBuildBtn?.addEventListener("click", buildSoraPrompt);
+    soraCopyBtn?.addEventListener("click", copySoraPrompt);
+    soraOpenBtn?.addEventListener("click", openSora);
+
+    // --- Engine query debug ---
+    function renderEngineUsedEntries(entries) {
+      if (!engineQueryUsed) return;
+      if (!entries || !entries.length) {
+        engineQueryUsed.innerHTML = "";
+        return;
+      }
+      engineQueryUsed.innerHTML = entries.map((entry) => {
+        const date = formatDate(entry.created_at);
+        const tags = (entry.tags || []).slice(0, 4).map((tag) => `<span class="pill">${tag}</span>`).join("");
+        return `
+          <div class="sample-item">
+            <div class="sample-head">
+              <div>${date}</div>
+              <div>${entry.memory_type || "event"}</div>
+            </div>
+            <div style="margin-top:6px;">${entry.preview || "—"}</div>
+            ${tags ? `<div class="sample-tags">${tags}</div>` : ""}
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function runEngineQuery() {
+      const question = (engineQueryInput?.value || "").trim();
+      if (!question) {
+        engineQueryStatus.textContent = "Enter a question to debug.";
+        return;
+      }
+      engineQueryStatus.textContent = "Running debug query...";
+      engineQueryAnswer.classList.add("hidden");
+      engineQueryDebug.classList.add("hidden");
+      engineQueryAnswer.textContent = "";
+      engineQueryDebug.textContent = "";
+      engineQueryBtn.disabled = true;
+
+      try {
+        const resp = await fetchApi(`${API_BASE}/insights/query`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question, debug: true }),
+        });
         if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
         const data = await resp.json();
-        if (data.status === "complete") {
-          await loadWeeklyVideo(jobId);
-          weeklyVideoStatus.textContent = "Weekly video ready.";
-          return;
+        engineQueryStatus.textContent = "Debug data ready.";
+        engineQueryAnswer.textContent = `Answer: ${data.answer || "-"}`;
+        engineQueryAnswer.classList.remove("hidden");
+        renderEngineUsedEntries(data.used_entries || []);
+        if (data.debug && data.debug.length) {
+          engineQueryDebug.textContent = JSON.stringify(data.debug, null, 2);
+          engineQueryDebug.classList.remove("hidden");
+        } else {
+          engineQueryDebug.textContent = "No debug payload returned.";
+          engineQueryDebug.classList.remove("hidden");
         }
-        if (data.status === "failed") {
-          weeklyVideoStatus.textContent = `Failed: ${data.error || "Unknown error"}`;
-          return;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+      } catch (err) {
+        engineQueryStatus.textContent = `Debug failed: ${err.message || err}`;
+      } finally {
+        engineQueryBtn.disabled = false;
       }
-      weeklyVideoStatus.textContent = "Still rendering. Check back in a moment.";
     }
 
-    async function loadWeeklyVideo(jobId) {
-      const resp = await fetchWithAuth(`${API_BASE}/products/${jobId}/download`);
-      if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
-      const blob = await resp.blob();
-      if (weeklyVideoBlobUrl) {
-        URL.revokeObjectURL(weeklyVideoBlobUrl);
-      }
-      weeklyVideoBlobUrl = URL.createObjectURL(blob);
-      weeklyVideoPlayer.src = weeklyVideoBlobUrl;
-      weeklyVideoPlayer.classList.remove("hidden");
-      weeklyVideoDownload.href = weeklyVideoBlobUrl;
-      weeklyVideoDownload.download = `weekly-video-${jobId}.mp4`;
-      weeklyVideoDownload.textContent = "Download MP4";
-      weeklyVideoDownload.classList.remove("hidden");
+    if (engineQueryBtn) {
+      engineQueryBtn.addEventListener("click", runEngineQuery);
     }
-
-    weeklyVideoBtn.addEventListener("click", generateWeeklyVideo);
 
     // --- Prompt suggestion ---
     async function requestPrompt() {
-      if (!ensureAuthenticated("Log in to request a prompt.")) {
-        return;
-      }
       promptText.textContent = "Generating a personal prompt...";
       promptText.classList.remove("muted");
       promptBtn.disabled = true;
       promptUseBtn.disabled = true;
       try {
-        const resp = await fetchWithAuth(`${API_BASE}/insights/prompt`);
+        const resp = await fetchApi(`${API_BASE}/insights/prompt`);
         if (!resp.ok) throw new Error(await resp.text() || `HTTP ${resp.status}`);
         const data = await resp.json();
         promptText.textContent = data.prompt || "No prompt generated.";
@@ -1543,9 +2407,6 @@
 
     // --- Chat ---
     async function sendConversationMessage() {
-      if (!ensureAuthenticated("Log in to chat with your memories.")) {
-        return;
-      }
       const text = chatInput.value.trim();
       if (!text) {
         chatStatus.textContent = "Please enter a message.";
@@ -1559,7 +2420,7 @@
       chatInput.value = "";
 
       try {
-        const resp = await fetchWithAuth(`${API_BASE}/conversation/respond`, {
+        const resp = await fetchApi(`${API_BASE}/conversation/respond`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: conversationHistory }),
